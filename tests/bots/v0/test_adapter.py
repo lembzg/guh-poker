@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import pytest
 
+from bots import make_bot
 from bots.v0.adapter import V0Bot, street_base, to_quant_state
 from core.interface import Action, ActionRecord, GameState, HandResult, LegalActions
 
@@ -166,7 +167,4 @@ def test_new_match_resets_the_opponent_model():
 
 
 def test_registered_in_make_bot():
-    bots = pytest.importorskip("bots")
-    if not hasattr(bots, "make_bot"):
-        pytest.skip("make_bot arrives with #4; add the v0 line then")
-    assert isinstance(bots.make_bot("v0"), V0Bot)
+    assert isinstance(make_bot("v0", seed=1), V0Bot)

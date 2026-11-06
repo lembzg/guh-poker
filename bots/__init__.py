@@ -7,6 +7,7 @@ from core.interface import Bot
 
 _REGISTRY = {
     "main": "bots.main.bot:MainBot",
+    "v0": "bots.v0.adapter:V0Bot",
     "random": "harness.opponents:RandomBot",
     "always_call": "harness.opponents:AlwaysCall",
     "always_raise_pot": "harness.opponents:AlwaysRaisePot",
