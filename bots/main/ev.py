@@ -140,18 +140,48 @@ def raise_share(stats) -> float:
     return float(np.clip(0.04 * _stat(stats, "aggression", DEFAULT_AGGRESSION), 0.0, 0.35))
 
 
+def bet_shares(stats, bluff_rate: float | None) -> tuple[float, float]:
+    """(value share, bluff share) of their range that bets when checked to."""
+    af = _stat(stats, "aggression", DEFAULT_AGGRESSION)
+    bet_freq = float(np.clip(0.2 + 0.1 * af, 0.15, 0.75))
+    bluffs = bluff_rate if bluff_rate is not None else float(np.clip(0.25 + 0.05 * (af - 1), 0.1, 0.6))
+    return bet_freq * (1 - bluffs), bet_freq * bluffs
+
+
+def _strength_vs_random(combos: np.ndarray, board: list[int], samples: int, rng: np.random.Generator
+                        ) -> np.ndarray:
+    """Each combo's equity vs a random hand on this board (what an equity-based bot computes); draws
+    get credit for their outs. Sampled jointly over the random hand and the runout."""
+    m, need = len(combos), 5 - len(board)
+    keys = rng.random((m * samples, 52))
+    keys[:, board] = 2.0
+    rows = np.arange(m * samples)
+    rep = np.repeat(combos, samples, axis=0)
+    keys[rows, rep[:, 0]] = 2.0
+    keys[rows, rep[:, 1]] = 2.0
+    pick = np.argpartition(keys, [1, need + 1] if need else [1], axis=1)[:, :need + 2]
+    villain, runout = pick[:, :2], pick[:, 2:]
+    full = np.concatenate([np.broadcast_to(np.array(board, dtype=np.int64), (m * samples, len(board))), runout], axis=1)
+    mine = _rank_matrix(np.concatenate([rep, full], axis=1))
+    theirs = _rank_matrix(np.concatenate([villain, full], axis=1))
+    return ((mine > theirs) + 0.5 * (mine == theirs)).reshape(m, samples).mean(axis=1)
+
+
 # ------------------------------------------------------------------ scoring
 
 def score_actions(hole: tuple[str, str], board: tuple[str, ...], pot: int, to_call: int, my_behind: int,
                   opp_behind: int, opp_range: Range | None = None, opp_stats=None,
                   sizes: tuple[float, ...] = DEFAULT_SIZES, min_bet: int = 1, runouts: int | None = None,
-                  seed: int | None = None, time_budget_ms: float | None = None) -> list[ActionEV]:
+                  seed: int | None = None, time_budget_ms: float | None = None, in_position: bool = True,
+                  bluff_rate: float | None = None, strength_samples: int = 32) -> list[ActionEV]:
     """EV (chips from now; folding = 0) of each legal-looking action.
 
     pot: chips in the pot now, including any bet we face. to_call: chips we must add to call.
     my_behind / opp_behind: chips each player has behind now. min_bet: smallest extra over the call that
     counts as a legal bet/raise. If time_budget_ms is set and an exact flop count wouldn't fit, runouts
-    are sampled to fit.
+    are sampled to fit. in_position=False means a check lets them bet this street: their value hands and
+    some bluffs (bluff_rate, else from aggression) bet avg_bet_frac x pot, and we answer with the best of
+    fold / call / check-raise.
     """
     t0 = time.perf_counter()
     hero = [_CARD_TO_IDX[c] for c in hole]
@@ -165,8 +195,7 @@ def score_actions(hole: tuple[str, str], board: tuple[str, ...], pot: int, to_ca
         if fit < n_runs:
             runouts = max(8, min(runouts or n_runs, fit))
     e = _equities(hero, brd, combos, runouts, seed)
-    strength = _rank_matrix(np.concatenate([combos, np.broadcast_to(np.array(brd), (len(combos), len(brd)))],
-                                           axis=1))
+    strength = _strength_vs_random(combos, brd, strength_samples, np.random.default_rng(seed))
     pct = _weighted_pct(strength, w)
     W = w.sum()
 
@@ -182,7 +211,8 @@ def score_actions(hole: tuple[str, str], board: tuple[str, ...], pot: int, to_ca
         call = min(to_call, my_behind)
         out.append(ActionEV("call", call, None, eq_all * (pot + call) - call))
     else:
-        out.append(ActionEV("check", 0, None, eq_all * pot))
+        out.append(ActionEV("check", 0, None, _check_ev(e, w, pct, pot, my_behind, opp_behind, opp_stats,
+                                                        bluff_rate, in_position)))
 
     eff = min(my_behind - to_call, opp_behind)      # the most a bet can put at risk
     if eff <= 0 or my_behind <= to_call:
@@ -217,6 +247,27 @@ def score_actions(hole: tuple[str, str], board: tuple[str, ...], pot: int, to_ca
         if time_budget_ms is not None and (time.perf_counter() - t0) * 1000 > time_budget_ms:
             break
     return out
+
+
+def _check_ev(e, w, pct, pot, my_behind, opp_behind, opp_stats, bluff_rate, in_position) -> float:
+    W = w.sum()
+    showdown = e * pot
+    if in_position or opp_behind <= 0 or my_behind <= 0:
+        return float((w * showdown).sum() / W)          # checking closes the street
+    value, bluff = bet_shares(opp_stats, bluff_rate)
+    bets = (pct >= 1 - value) | (pct < bluff)
+    if not bets.any():
+        return float((w * showdown).sum() / W)
+    b = max(1, min(int(round(_stat(opp_stats, "avg_bet_frac", 0.65) * pot)), opp_behind, my_behind))
+    wb = w * bets
+    responses = [np.zeros(len(e)),                                   # fold
+                 e * (pot + 2 * b) - b]                              # call
+    t = min(pot + 3 * b, my_behind, opp_behind)                      # check-raise (pot-size), our total
+    if t > b:
+        bluffs = pct < bluff                                         # their bluffs fold, value calls
+        responses.append(np.where(bluffs, float(pot + b), e * (pot + 2 * t) - t))
+    best = max(responses, key=lambda r: float((wb * r).sum()))
+    return float((w * np.where(bets, best, showdown)).sum() / W)
 
 
 def best_action(evs: list[ActionEV]) -> ActionEV:

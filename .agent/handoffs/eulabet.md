@@ -2,45 +2,34 @@
 
 <!-- Only you edit your file. Overwrite (don't append) at each checkpoint. Format: .agent/RECOVERY.md -->
 
-Updated: 2026-11-06T23:37:32+00:00
+Updated: 2026-11-06T23:57:22+00:00
 Status: in-review
-Task: #24 Postflop EV engine (in review: #19 #20 #21; watcher waits on #17)
-Branch: eulabet/24-ev
-Commit: e6f3b6c
+Task: #26 EV engine follow-up (PR pending); #19 opponent model awaiting lembzg approval
+Branch: eulabet/26-ev-check
+Commit: 48bab66
 
 ## Done
-- #10 equity (#15) and #6 harness (#18) merged. Reviewed+approved captain's #17 (flagged float raise_to in clamp_to_legal).
-- #13: bots/main/opponent.py (OpponentModel, classify), tests/bots/main/test_opponent.py (15 tests). docs/API.md: additive bluff_rate() + classify().
+- Merged: #10 equity (#15), #6 harness (#18), #22 gauntlet (#23), #24 EV engine (#25), #12 postflop (#20), #5 MainBot (#21). Milestone "MainBot plays legal hands" ✅.
+- #26: ev.py OOP check model (opp bets after our check; best of fold/call/check-raise) + draw-aware opp strength (equity vs random). 14 EV tests.
 
 ## In progress
-- PR #25 (#24 EV engine bots/main/ev.py): tested tool, NOT wired in. A/B (EV as whole postflop policy vs current postflop, 4k dup, seed 51): hackathon 146±89 vs 210±84, equity_bot 61±76 vs 159±55; always_call 1604 vs 584 (2k). Gaps: check EV ignores opp betting after our check; draws scored as weak.
-- Background watcher (gh poll every 2 min, 3h) for #17 merge / #19 review.
-- PR #23 (#22 gauntlet): 5 new opponents + python -m harness.gauntlet. Integrated MainBot gauntlet (3k dup, seed 41): wins all except jam_top (+19±29); always_jam only +367 (best response ~767) → preflop leaks (#11).
-- PR #21 (#5 MainBot): bot.py (thread time guard, clamp, guarded imports) + fallback.py. Integrated rehearsal (#17+#13+#12+#5, fallback preflop), 6k dup hands seed 31: vs random +521±67, always_call +533±38, always_raise_pot +975±109, hackathon +281±68; max 14 ms, 0 illegal.
-- PR #20 (#12 postflop): ready; needs #17 merged first. Harness: +63±25 bb/100 vs hackathon (check/call postflop: -38±24), 20k dup hands, seed 21; test bot lives in scratchpad only.
-- PR #19 (contract label): needs lembzg's approval AND #17 merged first (imports core.interface).
+- PR #19 (#13 opponent model): rebased, CI green, needs lembzg contract approval. Pinged with status (also: clamp float raise_to, v0 test needs eval7).
+- #26 PR: tool only, not wired. A/B (EV as whole postflop policy vs current, 4k dup seed 51): hackathon 119±90 vs 210±84; equity_bot 86±74 vs 159±55. Current postflop stays.
 
 ## Files touched
-- bots/main/postflop.py, tests/bots/main/test_postflop.py (branch eulabet/12-postflop)
-- bots/main/opponent.py, tests/bots/main/test_opponent.py, docs/API.md
+- bots/main/ev.py, tests/bots/main/test_ev.py
 
 ## Tests
-- Full suite 58 passed (with #17's core/interface.py + core/cards.py copied in UNTRACKED; never commit them; delete once #17 merges).
-- range_estimate: 0.1 ms preflop, 1.4 ms river.
+- main: 138 pass + 1 fail (tests/bots/v0 raise test needs eval7, not installed; Python 3.14 can't build it).
 
 ## Bugs / blockers
-- eval7 (v0 dep) doesn't build on Python 3.14; no 3.12 locally → can't run v0 here. Friend runs v0 gauntlet.
-- User: friend is improving v0 (improvements.md) → don't touch bots/v0 or #11 preflop.
-- NEW (user, 2026-11-06): tournament allows 3 min per decision. Unverified: per-decision vs time bank, hardware, hands per match. MainBot default budget is 500 ms → raise once confirmed.
-- PR #19 can't merge before #17 (core.interface missing on main → ImportError).
-- requirements.txt (numpy, pytest) pending on #3.
+- eval7 can't build on local Python 3.14 → v0 can't be measured here.
+- User: friend is improving v0 / preflop (improvements.md) → stay off bots/v0 and #11.
+- Tournament: 3 min per decision (unverified details) — docs/PRODUCT.md.
 
 ## Decisions & dependencies
-- Ported from v0: shrinkage K=20, min samples 12, labels. Priors and label thresholds are HU guesses → tune with harness.
-- Uses core.equity private helpers (_rank_matrix, _hand_class, _preflop_ranking, card maps); both modules are mine.
-- Blinds for pot-fraction replay are learned from range_estimate states (default 1/2).
+- EV engine as full policy loses to postflop.py heuristics vs betting bots; wins big vs always_call. Use selectively later (sizing / vs stations) with harness A/B.
 
 ## Next steps
-1. When #17 merges: rm core/interface.py core/cards.py (untracked copies), git rebase origin/main, pytest, push, merge #19 after approval.
-2. When #16 (v0) merges: run v0 vs the 4 baselines (20k hands, duplicate), post to docs/PRODUCT.md → Results.
-3. After #17/#19/#20 merge: #5 MainBot wiring or #11 preflop are the remaining P0s (check status.sh for owners).
+1. Merge #26 PR after CI. Merge #19 once approved; then gauntlet main (python -m harness.gauntlet --a main) and record in docs/PRODUCT.md Results.
+2. Options: selective EV use in postflop.py (vs stations, confident stats); harness clock/timeouts simulation.

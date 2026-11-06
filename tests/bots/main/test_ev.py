@@ -93,3 +93,35 @@ def test_time_budget_samples_runouts():
 def test_rejects_preflop():
     with pytest.raises(ValueError):
         score_actions(("Qh", "Jh"), (), 3, 1, 199, 198)
+
+
+MANIAC = SimpleNamespace(fold_to_bet=0.1, aggression=6.0, avg_bet_frac=1.0)
+PASSIVE = SimpleNamespace(fold_to_bet=0.4, aggression=0.4, avg_bet_frac=0.5)
+
+
+def check_ev(stats, in_position, hole=("Ah", "Kd"), board=("As", "8c", "3d")):
+    evs = score_actions(hole, board, 20, 0, 190, 190, top_percent_range(0.6), stats, runouts=100, seed=1,
+                        in_position=in_position)
+    return by_kind(evs)[("check", None)]
+
+
+def test_out_of_position_check_values_their_bets():
+    # Strong hand OOP: checking to a maniac is worth much more than checking it down.
+    assert check_ev(MANIAC, False) > check_ev(MANIAC, True) + 10
+    # Against a passive bot, checking OOP adds little.
+    assert check_ev(PASSIVE, False) - check_ev(PASSIVE, True) < check_ev(MANIAC, False) - check_ev(MANIAC, True)
+
+
+def test_weak_hand_check_oop_costs_equity_vs_aggression():
+    weak = dict(hole=("7c", "6d"), board=("As", "Kd", "Qh"))
+    assert check_ev(MANIAC, False, **weak) <= check_ev(MANIAC, True, **weak) + 0.5   # they bet us off it
+
+
+def test_draws_count_as_strength():
+    from bots.main.ev import _strength_vs_random
+    import numpy as np
+    from core.equity import _CARD_TO_IDX as I
+    board = [I[c] for c in ("Kh", "9h", "2c")]
+    combos = np.array([[I["Ah"], I["5h"]], [I["4d"], I["3s"]], [I["Kd"], I["Qc"]]])
+    s = _strength_vs_random(combos, board, 400, np.random.default_rng(1))
+    assert s[2] > s[0] > s[1] and s[0] > 0.5        # nut flush draw beats air, below top pair
