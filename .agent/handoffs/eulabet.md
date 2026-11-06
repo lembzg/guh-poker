@@ -2,10 +2,10 @@
 
 <!-- Only you edit your file. Overwrite (don't append) at each checkpoint. Format: .agent/RECOVERY.md -->
 
-Updated: 2026-11-06T22:39:02+00:00
-Status: in-review
-Task: #10 Equity engine
-Branch: eulabet/10-equity
+Updated: 2026-11-06T22:46:49+00:00
+Status: in-progress
+Task: #6 Local HU harness
+Branch: eulabet/6-harness
 Commit: 6c63ff1
 
 ## Done
