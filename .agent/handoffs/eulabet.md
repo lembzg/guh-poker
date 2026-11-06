@@ -2,30 +2,30 @@
 
 <!-- Only you edit your file. Overwrite (don't append) at each checkpoint. Format: .agent/RECOVERY.md -->
 
-Updated: 2026-11-06T22:22:08+00:00
-Status: idle
-Task: none
-Branch: main
+Updated: 2026-11-06T22:34:11+00:00
+Status: in-progress
+Task: #10 Equity engine
+Branch: eulabet/10-equity
 Commit: none
 
 ## Done
-- Bootstrapped the repo: coordination framework (CLAUDE.md, docs/, scripts/, CI) and the ticket pool.
-- Pivoted from DyypHoldem to our own bot (D-005): removed upstream code; contracts in docs/API.md; file ownership in docs/PLAN.md.
+- Claimed #10; branch created from origin/main.
 
 ## In progress
-- (none)
+- core/equity.py per docs/API.md → Equity (rank7, equity, range_from_classes, top_percent_range).
 
 ## Files touched
-- (none on a branch)
+- (none yet)
 
 ## Tests
-- ./scripts/check.sh → OK
+- (none yet)
 
 ## Bugs / blockers
-- (none)
+- core/cards.py (#4) not landed: copy card helpers locally in core/equity.py.
 
 ## Decisions & dependencies
-- D-001, D-005. The docs/API.md v0 contract awaits lembzg's confirmation in #4.
+- #14 (v0 bot) may contain an evaluator; check it before optimising rank7.
 
 ## Next steps
-1. Run ./scripts/status.sh, wait for the human's go, then claim #10 (equity) per docs/PLAN.md.
+1. Implement rank7 + tests, then equity (Monte Carlo), then range helpers + tools/equity preflop ranking table.
+2. Measure speed (target 2000 samples < 20 ms) and report in PR.
