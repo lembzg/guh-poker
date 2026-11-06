@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import random
 
-from core.equity import RANKS
+from core.equity import RANKS, SUITS, equity, top_percent_range
 from harness._types import Action, GameState, HandResult
 
 
@@ -89,9 +89,106 @@ class HackathonBot(_Base):
         return Action("check") if lg.can_check else Action("fold")
 
 
+class AlwaysJam(_Base):
+    """All-in at every decision; calls when it can't raise."""
+    name = "always_jam"
+
+    def act(self, state: GameState) -> Action:
+        lg = state.legal
+        if lg.max_raise_to is not None:
+            return Action("raise", lg.max_raise_to)
+        return Action("check") if lg.can_check else Action("call")
+
+
+class JamTop(_Base):
+    """Jams its top `pct` of hands preflop (by equity vs random) and folds/checks everything else;
+    calls any bet with those hands postflop."""
+    name = "jam_top"
+
+    def __init__(self, pct: float = 0.10):
+        self.pct = pct
+        self._range = set(top_percent_range(pct))
+
+    def act(self, state: GameState) -> Action:
+        lg = state.legal
+        a, b = state.hole_cards
+        combo = (a, b) if (RANKS.index(a[0]), SUITS.index(a[1])) > (RANKS.index(b[0]), SUITS.index(b[1])) else (b, a)
+        if combo not in self._range:
+            return Action("check") if lg.can_check else Action("fold")
+        if state.street == 1 and lg.max_raise_to is not None:
+            return Action("raise", lg.max_raise_to)
+        return Action("check") if lg.can_check else Action("call")
+
+
+class MinRaiser(_Base):
+    """Min-raises any two cards whenever it can, otherwise checks/calls."""
+    name = "min_raiser"
+
+    def act(self, state: GameState) -> Action:
+        lg = state.legal
+        if lg.min_raise_to is not None:
+            return Action("raise", lg.min_raise_to)
+        return Action("check") if lg.can_check else Action("call")
+
+
+class ThreeBetAny(_Base):
+    """Preflop: opens to 2.5bb and 3-bets to 3x with any two cards, folds to a 4-bet.
+    Postflop: c-bets half pot on the flop as the preflop aggressor; continues only with a pair or better."""
+    name = "three_bet_any"
+
+    def act(self, state: GameState) -> Action:
+        lg = state.legal
+        pre = [a for a in state.history if a.street == 1]
+        my_raises = sum(a.actor == "me" and a.kind == "raise" for a in pre)
+        if state.street == 1:
+            if my_raises:
+                return Action("check") if lg.can_check else Action("fold")      # facing a 4-bet
+            if not pre and state.is_button:
+                return _raise_or_call(state, int(2.5 * state.big_blind))       # open
+            if any(a.actor == "opp" and a.kind == "raise" for a in pre):
+                return _raise_or_call(state, 3 * state.opp_committed)          # 3-bet
+            return _raise_or_call(state, 3 * state.big_blind)                  # raise the limp
+        h1, h2 = (RANKS.index(c[0]) for c in state.hole_cards)
+        made = h1 == h2 or bool({h1, h2} & {RANKS.index(c[0]) for c in state.board})
+        if lg.can_check:
+            last_pre_raiser = next((a.actor for a in reversed(pre) if a.kind == "raise"), None)
+            flop_bets = any(a.street == 2 and a.kind == "raise" for a in state.history)
+            if state.street == 2 and last_pre_raiser == "me" and not flop_bets:
+                return _raise_or_call(state, _pot_raise_to(state, 0.5))
+            return Action("check")
+        return Action("call") if made else Action("fold")
+
+
+class EquityBot(_Base):
+    """The typical LLM-written bot: equity vs a random hand against pot odds.
+    Raises 2/3 pot at >= 65% equity, bets half pot when checked to at >= 55%, calls when equity beats
+    the pot odds by 5 points, else checks/folds."""
+    name = "equity_bot"
+
+    def __init__(self, samples: int = 300):
+        self.samples = samples
+
+    def act(self, state: GameState) -> Action:
+        lg = state.legal
+        eq = equity(state.hole_cards, state.board, None, samples=self.samples, seed=state.hand_id)
+        if eq >= 0.65 and lg.min_raise_to is not None:
+            return _raise_or_call(state, _pot_raise_to(state, 2 / 3))
+        if lg.can_check:
+            if eq >= 0.55 and lg.min_raise_to is not None:
+                return _raise_or_call(state, _pot_raise_to(state, 0.5))
+            return Action("check")
+        pot = state.my_committed + state.opp_committed
+        return Action("call") if eq >= lg.call_amount / (pot + lg.call_amount) + 0.05 else Action("fold")
+
+
 OPPONENTS = {
     "random": RandomBot,
     "always_call": AlwaysCall,
     "always_raise_pot": AlwaysRaisePot,
     "hackathon": HackathonBot,
+    "always_jam": AlwaysJam,
+    "jam_top": JamTop,
+    "min_raiser": MinRaiser,
+    "three_bet_any": ThreeBetAny,
+    "equity_bot": EquityBot,
 }
