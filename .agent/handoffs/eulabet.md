@@ -2,35 +2,36 @@
 
 <!-- Only you edit your file. Overwrite (don't append) at each checkpoint. Format: .agent/RECOVERY.md -->
 
-Updated: 2026-11-06T22:46:49+00:00
-Status: in-progress
+Updated: 2026-11-06T22:49:42+00:00
+Status: in-review
 Task: #6 Local HU harness
 Branch: eulabet/6-harness
-Commit: 6c63ff1
+Commit: ea724da
 
 ## Done
-- core/equity.py: rank7 (pure Python), vectorised numpy evaluator, equity (MC in 1024-sample chunks, time budget, exact on river), range_from_classes, top_percent_range.
-- tools/equity/gen_preflop_ranking.py → core/data/preflop_ranking.json (169 classes, 200k samples each, seed 1, ~47 s).
-- tests/core/test_equity.py: 19 tests pass.
+- #10 equity engine merged (#15).
+- #6: harness/engine.py (HU NLHE rules), match.py (play_match, duplicate, CI, latency), opponents.py (random, always_call, always_raise_pot, hackathon), run.py (CLI per docs/API.md), _types.py (local copy of the contract until #4).
+- tests/harness/test_harness.py: 24 tests; whole suite 43 passed.
 
 ## In progress
-- PR #15 ready for merge once CI is green.
+- PR #18: merge once CI is green.
 
 ## Files touched
-- core/equity.py, core/data/preflop_ranking.json, tools/equity/, tests/core/test_equity.py
+- harness/, tests/harness/
 
 ## Tests
-- .venv/bin/python -m pytest -q → 19 passed; ./scripts/check.sh → OK
-- Latency (2000 samples, top-30% range, M-series laptop): preflop 2.8 ms, flop 2.1, turn 1.8, river (exact) 0.2.
+- .venv/bin/python -m pytest -q → 43 passed; ./scripts/check.sh → OK
+- Throughput ~20-30k hands/s with trivial bots.
 
 ## Bugs / blockers
-- Needs numpy (and pytest for tests) in requirements.txt; that file is owned by #3 (captain). Local: python3 -m venv .venv && .venv/bin/pip install numpy pytest.
+- requirements.txt (numpy, pytest) still pending on #3 (captain). 'main' bot can't run until #4/#5 land (bots.make_bot missing).
 
 ## Decisions & dependencies
-- Card helpers copied locally (private) until core/cards.py (#4) lands; swap to core.cards afterwards.
-- Range key order: higher card first by rank, ties broken by suit order cdhs (s highest).
-- Empty/all-dead range → treated as any two cards. Non-positive weights ignored.
+- Engine rules: fold only legal facing a bet (fold-when-check → check, counted illegal); call with 0 to call = check (legal); overbets beyond opponent's stack allowed, uncalled part refunded.
+- Duplicate: hands rounded up to even; same bot instances across both seatings; CI over deal pairs.
+- harness.match.make_bot resolves harness opponents locally, everything else via bots.make_bot (#4).
 
 ## Next steps
-1. Merge #15 when CI is green; then ./scripts/status.sh and pick the next P0 ticket.
-2. After #4 lands: replace local card helpers in core/equity.py with core.cards.
+1. Merge #18 when CI is green; run ./scripts/status.sh.
+2. When #16 (v0) merges: run v0 vs all four opponents (20k hands, duplicate) and post results in docs/PRODUCT.md → Results.
+3. Next ticket candidate: #13 opponent model (per docs/PLAN.md), or #12 after the v0 reuse decision.
