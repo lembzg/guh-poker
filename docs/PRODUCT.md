@@ -13,7 +13,7 @@ Fill in every row. Each one changes how we tune the bot:
 | Format: number of hands per match, round-robin or knockout, stacks reset each hand? | | |
 | Blinds, starting stack (in big blinds), antes | | |
 | Bet sizing: any amount, or a fixed set? Minimum raise rule? | | |
-| Time limit per action / per hand / per match; what happens on time-out | | |
+| Time limit per action / per hand / per match; what happens on time-out | **3 minutes per decision** (unverified: per-decision vs a shared time bank, and the time-out penalty, still unknown) | Organisers, relayed by EulaBet's human, 2026-11-06 |
 | What happens on an illegal action or a crash | | |
 | Interface: protocol, language, how the bot is submitted/hosted | | |
 | Hardware we run on (CPU/GPU, RAM), network access allowed? | | |
