@@ -32,7 +32,7 @@ A ticket's **Owns:** must fit this table. Every ticket also owns its mirror fold
 ## Milestones
 | Milestone | Done? |
 |---|---|
-| `MainBot` plays legal hands in the harness (fallback only is fine) | |
+| `MainBot` plays legal hands in the harness (fallback only is fine) | ✅ #21 (0 illegal in 1000 hands vs random) |
 | Preflop + postflop + equity merged; MainBot beats `always_call` and `random` with CI > 0 | |
 | Opponent model merged; MainBot beats its own previous version | |
 | Tournament system received; ENVIRONMENT.md filled; adapter plays 1000 legal hands | |
