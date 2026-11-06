@@ -2,10 +2,10 @@
 
 <!-- Only you edit your file. Overwrite (don't append) at each checkpoint. Format: .agent/RECOVERY.md -->
 
-Updated: 2026-11-06T23:20:48+00:00
+Updated: 2026-11-06T23:37:32+00:00
 Status: in-review
-Task: #22 Harness gauntlet (in review: #19 #20 #21)
-Branch: eulabet/22-gauntlet
+Task: #24 Postflop EV engine (in review: #19 #20 #21; watcher waits on #17)
+Branch: eulabet/24-ev
 Commit: e6f3b6c
 
 ## Done
@@ -13,6 +13,8 @@ Commit: e6f3b6c
 - #13: bots/main/opponent.py (OpponentModel, classify), tests/bots/main/test_opponent.py (15 tests). docs/API.md: additive bluff_rate() + classify().
 
 ## In progress
+- PR #25 (#24 EV engine bots/main/ev.py): tested tool, NOT wired in. A/B (EV as whole postflop policy vs current postflop, 4k dup, seed 51): hackathon 146±89 vs 210±84, equity_bot 61±76 vs 159±55; always_call 1604 vs 584 (2k). Gaps: check EV ignores opp betting after our check; draws scored as weak.
+- Background watcher (gh poll every 2 min, 3h) for #17 merge / #19 review.
 - PR #23 (#22 gauntlet): 5 new opponents + python -m harness.gauntlet. Integrated MainBot gauntlet (3k dup, seed 41): wins all except jam_top (+19±29); always_jam only +367 (best response ~767) → preflop leaks (#11).
 - PR #21 (#5 MainBot): bot.py (thread time guard, clamp, guarded imports) + fallback.py. Integrated rehearsal (#17+#13+#12+#5, fallback preflop), 6k dup hands seed 31: vs random +521±67, always_call +533±38, always_raise_pot +975±109, hackathon +281±68; max 14 ms, 0 illegal.
 - PR #20 (#12 postflop): ready; needs #17 merged first. Harness: +63±25 bb/100 vs hackathon (check/call postflop: -38±24), 20k dup hands, seed 21; test bot lives in scratchpad only.
