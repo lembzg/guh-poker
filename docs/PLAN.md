@@ -24,6 +24,7 @@ A ticket's **Owns:** must fit this table. Every ticket also owns its mirror fold
 | `bots/main/preflop.py` (+ data files under `bots/main/data/preflop*`) | #11 | |
 | `bots/main/postflop.py` | #12 | |
 | `bots/main/opponent.py` | #13 | |
+| `bots/main/ev.py` | #24 | postflop EV engine (helper for #12) |
 | `harness/` | #6 | |
 | `adapters/`, `docs/ENVIRONMENT.md` | #8 | |
 | `docs/PRODUCT.md`, `docs/PLAN.md`, `docs/DECISIONS.md` | anyone | tiny direct commits OK |
