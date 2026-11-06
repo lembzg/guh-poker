@@ -1,0 +1,65 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./scripts/status.sh)",
+      "Bash(./scripts/status.sh *)",
+      "Bash(./scripts/check.sh)",
+      "Bash(./scripts/check.sh *)",
+      "Bash(./scripts/me.sh)",
+      "Bash(./scripts/me.sh *)",
+      "Bash(./scripts/resume.sh)",
+      "Bash(./scripts/resume.sh *)",
+      "Bash(./scripts/checkpoint.sh)",
+      "Bash(./scripts/checkpoint.sh *)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(git fetch *)",
+      "Bash(git branch *)",
+      "Bash(git switch *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git pull *)",
+      "Bash(git rebase origin/main)",
+      "Bash(git push -u origin *)",
+      "Bash(git push --force-with-lease)",
+      "Bash(gh issue list *)",
+      "Bash(gh issue view *)",
+      "Bash(gh issue create *)",
+      "Bash(gh issue edit *)",
+      "Bash(gh issue comment *)",
+      "Bash(gh pr list *)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr diff *)",
+      "Bash(gh pr checks *)",
+      "Bash(gh pr create *)",
+      "Bash(gh pr comment *)",
+      "Bash(gh pr ready *)",
+      "Bash(gh pr edit *)",
+      "Bash(gh pr review *)",
+      "Bash(gh run list *)",
+      "Bash(gh run view *)"
+    ],
+    "deny": [
+      "Bash(git push --force)",
+      "Bash(git push -f *)",
+      "Bash(gh repo delete *)",
+      "Bash(gh issue delete *)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/scripts/resume.sh\" 2>&1 || true",
+            "timeout": 30,
+            "statusMessage": "Loading recovery brief..."
+          }
+        ]
+      }
+    ]
+  }
+}

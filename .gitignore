@@ -1,0 +1,29 @@
+# Personal agent config (never shared)
+CLAUDE.local.md
+.claude/settings.local.json
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Run output and large artifacts (use release assets — docs/DECISIONS.md D-004)
+*.log
+results/
+logs/
+training_data/
+*.download
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
