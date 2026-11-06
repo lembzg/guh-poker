@@ -2,8 +2,8 @@
 
 <!-- Only you edit your file. Overwrite (don't append) at each checkpoint. Format: .agent/RECOVERY.md -->
 
-Updated: 2026-11-06T23:17:23+00:00
-Status: in-progress
+Updated: 2026-11-06T23:20:48+00:00
+Status: in-review
 Task: #22 Harness gauntlet (in review: #19 #20 #21)
 Branch: eulabet/22-gauntlet
 Commit: e6f3b6c
@@ -13,6 +13,7 @@ Commit: e6f3b6c
 - #13: bots/main/opponent.py (OpponentModel, classify), tests/bots/main/test_opponent.py (15 tests). docs/API.md: additive bluff_rate() + classify().
 
 ## In progress
+- PR #23 (#22 gauntlet): 5 new opponents + python -m harness.gauntlet. Integrated MainBot gauntlet (3k dup, seed 41): wins all except jam_top (+19±29); always_jam only +367 (best response ~767) → preflop leaks (#11).
 - PR #21 (#5 MainBot): bot.py (thread time guard, clamp, guarded imports) + fallback.py. Integrated rehearsal (#17+#13+#12+#5, fallback preflop), 6k dup hands seed 31: vs random +521±67, always_call +533±38, always_raise_pot +975±109, hackathon +281±68; max 14 ms, 0 illegal.
 - PR #20 (#12 postflop): ready; needs #17 merged first. Harness: +63±25 bb/100 vs hackathon (check/call postflop: -38±24), 20k dup hands, seed 21; test bot lives in scratchpad only.
 - PR #19 (contract label): needs lembzg's approval AND #17 merged first (imports core.interface).
@@ -26,6 +27,8 @@ Commit: e6f3b6c
 - range_estimate: 0.1 ms preflop, 1.4 ms river.
 
 ## Bugs / blockers
+- eval7 (v0 dep) doesn't build on Python 3.14; no 3.12 locally → can't run v0 here. Friend runs v0 gauntlet.
+- User: friend is improving v0 (improvements.md) → don't touch bots/v0 or #11 preflop.
 - NEW (user, 2026-11-06): tournament allows 3 min per decision. Unverified: per-decision vs time bank, hardware, hands per match. MainBot default budget is 500 ms → raise once confirmed.
 - PR #19 can't merge before #17 (core.interface missing on main → ImportError).
 - requirements.txt (numpy, pytest) pending on #3.
