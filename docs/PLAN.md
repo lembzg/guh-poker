@@ -1,40 +1,42 @@
 # Plan
 
-Tasks live in GitHub Issues (`./scripts/status.sh`). This file holds the team mapping, folder ownership, and the cut list.
+Tasks live in GitHub Issues (`./scripts/status.sh`). This file holds the team mapping, file ownership, and the cut list.
 
 ## Team
 Add yourself when you join (a direct commit to `main` is fine). Your handoff is `.agent/handoffs/<login-lowercase>.md`.
 
-| GitHub login | Role (CLAUDE.md) | Notes |
+| GitHub login | Role (CLAUDE.md) | Suggested first tickets |
 |---|---|---|
-| lembzg | **Integration captain**: shared files, contracts, reviews, submission | Repo owner |
-| EulaBet | Tickets | |
-| _(third teammate)_ | Tickets | |
+| lembzg | **Integration captain**: shared files, contracts, reviews, submission | #3 env/CI, #4 interface, then #8 tournament adapter |
+| EulaBet | Tickets | #10 equity, #6 harness, then #13 opponent model |
+| _(third teammate)_ | Tickets | #11 preflop, #12 postflop, then #5 bot wiring |
 
-## Folder ownership
-A ticket's **Owns:** must fit this table. Upstream folders are listed only where a ticket is expected to edit them.
+## File ownership
+A ticket's **Owns:** must fit this table. Every ticket also owns its mirror folder under `tests/`.
 
 | Path | Owner | Notes |
 |---|---|---|
-| `CLAUDE.md`, `scripts/`, `.github/`, `.claude/`, root config, `requirements*.txt`, `src/settings/` | captain | shared |
-| `docs/API.md`, `src/bots/interface.py`, `src/bots/__init__.py` | captain | contract |
+| `CLAUDE.md`, `scripts/`, `.github/`, `.claude/`, root config, `requirements*.txt` | captain (#3) | shared |
+| `docs/API.md`, `core/interface.py`, `core/cards.py`, `bots/__init__.py` | captain (#4) | contract |
+| `core/equity.py` | #10 | |
+| `bots/main/bot.py`, `bots/main/fallback.py` | #5 | |
+| `bots/main/preflop.py` (+ data files under `bots/main/data/preflop*`) | #11 | |
+| `bots/main/postflop.py` | #12 | |
+| `bots/main/opponent.py` | #13 | |
+| `harness/` | #6 | |
+| `adapters/`, `docs/ENVIRONMENT.md` | #8 | |
 | `docs/PRODUCT.md`, `docs/PLAN.md`, `docs/DECISIONS.md` | anyone | tiny direct commits OK |
-| `docs/ENVIRONMENT.md`, `src/adapters/` | env ticket | |
-| `src/bots/baseline/` | fallback-bot ticket | |
-| `src/bots/deepstack/` | DeepStack adapter ticket | |
-| `src/harness/` | harness ticket | |
-| `tools/models/`, `data/models/` | model-recovery ticket | |
-| `tools/tables/` + the table pointer files in `src/nn/bucketing/`, `src/game/evaluation/`, `src/terminal_equity/` | table-recovery ticket | |
-| `src/server/` | protocol-bugfix ticket | upstream file |
 
 ## Milestones
 | Milestone | Done? |
 |---|---|
-| Bot runs end-to-end locally (models + tables recovered, CPU) | |
-| Harness reports DeepStack vs baseline bb/100 | |
-| Tournament system received; ENVIRONMENT.md filled; adapter plays legal hands | |
-| Tuned for the environment (time budget, bet sizes) | |
+| `MainBot` plays legal hands in the harness (fallback only is fine) | |
+| Preflop + postflop + equity merged; MainBot beats `always_call` and `random` with CI > 0 | |
+| Opponent model merged; MainBot beats its own previous version | |
+| Tournament system received; ENVIRONMENT.md filled; adapter plays 1000 legal hands | |
+| Tuned for the environment (time budget, stack depth, bet sizes) | |
 | Submitted | |
 
 ## Cut list
 _Features we dropped, and why. Move things here early._
+- DyypHoldem (DeepStack port): its models and tables are gone, it needs a GPU, and it's slow. See D-005.

@@ -28,3 +28,8 @@ Consequences: The DeepStack bot can't run until both recovery tickets land. A fa
 Context: Models and tables are 100–400 MB each. LFS has storage and bandwidth quotas (which is how upstream lost its data), and `check.sh` rejects files over 5 MB.
 Decision: Upload them as release assets on this repo (up to 2 GB each). `tools/artifacts.txt` lists tag, asset, destination and sha256, and `tools/fetch_artifacts.sh` downloads them.
 Consequences: One extra setup step per clone. Artifacts are versioned by release tag, not by commit.
+
+## D-005 Build our own exploitative bot; drop DyypHoldem — 2026-11-06 — EulaBet (human-approved)
+Context: DyypHoldem's models and tables are gone (D-003), it needs a GPU, and it's slow. No open-source heads-up NLHE bot is both strong and ready to use. Our opponents will be other hackathon bots.
+Decision: Remove the DyypHoldem code. Build `bots/main` ourselves: preflop charts, equity-vs-range postflop play, opponent modelling for exploitation, a time guard and a fallback. Libraries are allowed only for solved, boring parts (via a `decision` issue). **Supersedes D-002, D-003 and D-004.**
+Consequences: No deep solver. Our strength comes from exploiting weak bots and never acting illegally or timing out. History keeps the DyypHoldem snapshot commit, but nothing on `main` uses it.

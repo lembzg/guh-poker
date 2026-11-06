@@ -40,14 +40,14 @@ for h in .agent/handoffs/*.md; do
   grep -q '^## Next steps' "$h" || err "$h lacks '## Next steps'"
 done
 
-# 7. Python parses (no deps needed). Upstream code + ours under src/ and tools/.
+# 7. Python parses (no deps needed).
 if command -v python3 >/dev/null; then
-  pydirs=$(ls -d src tools 2>/dev/null || true)
-  [ -n "$pydirs" ] && { python3 -m compileall -q $pydirs >/dev/null || err "Python syntax errors (python3 -m compileall -q src tools)"; }
+  pydirs=$(ls -d core bots harness adapters tools tests 2>/dev/null || true)
+  [ -n "$pydirs" ] && { python3 -m compileall -q $pydirs >/dev/null || err "Python syntax errors (python3 -m compileall -q $pydirs)"; }
 fi
 
 # --- Stack checks: the Python-environment ticket adds install + tests here ---
-# Example: pip install -q -r requirements.txt && (cd src && python -m pytest -q ../tests)
+# Example: python3 -m pip install -q -r requirements.txt && python3 -m pytest -q
 # -----------------------------------------------------------------------------
 
 if [ "$fail" -ne 0 ]; then echo "check: FAILED"; exit 1; fi

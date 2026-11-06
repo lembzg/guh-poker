@@ -1,7 +1,7 @@
 # Product: heads-up NLHE tournament bot
 
 ## Goal
-Win a heads-up no-limit hold'em bot-vs-bot tournament. Our bot is a fork of DyypHoldem (DeepStack-style continual re-solving), plus whatever we learn by reverse-engineering the tournament system.
+Win a heads-up no-limit hold'em bot-vs-bot tournament with our own bot (D-005). It plays solid default poker, exploits whatever the opposing bots do wrong, and never acts illegally or times out.
 
 ## Tournament rules
 _Paste the organisers' rules **verbatim** here as soon as we get them. Do the analysis in `docs/ENVIRONMENT.md`._

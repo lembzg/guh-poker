@@ -2,14 +2,15 @@
 
 <!-- Only you edit your file. Overwrite (don't append) at each checkpoint. Format: .agent/RECOVERY.md -->
 
-Updated: 2026-11-06T21:48:31+00:00
+Updated: 2026-11-06T22:22:08+00:00
 Status: idle
 Task: none
 Branch: main
 Commit: none
 
 ## Done
-- Imported lucky72s/dyypholdem history into main; added the coordination framework (CLAUDE.md, docs/, scripts/, CI) and the initial ticket pool.
+- Bootstrapped the repo: coordination framework (CLAUDE.md, docs/, scripts/, CI) and the ticket pool.
+- Pivoted from DyypHoldem to our own bot (D-005): removed upstream code; contracts in docs/API.md; file ownership in docs/PLAN.md.
 
 ## In progress
 - (none)
@@ -21,10 +22,10 @@ Commit: none
 - ./scripts/check.sh → OK
 
 ## Bugs / blockers
-- Upstream LFS data (models + tables) is gone, so the DeepStack bot can't run yet (D-003).
+- (none)
 
 ## Decisions & dependencies
-- D-001..D-004. D-004 (release assets) awaits lembzg's confirmation.
+- D-001, D-005. The docs/API.md v0 contract awaits lembzg's confirmation in #4.
 
 ## Next steps
-1. Run ./scripts/status.sh, wait for the human's go, then claim the top unclaimed P0 ticket.
+1. Run ./scripts/status.sh, wait for the human's go, then claim #10 (equity) per docs/PLAN.md.

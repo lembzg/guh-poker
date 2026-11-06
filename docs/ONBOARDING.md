@@ -9,12 +9,12 @@
 ```bash
 git clone git@github.com:lembzg/guh-poker.git && cd guh-poker
 ```
-You don't need git-lfs. Upstream's LFS data is gone (see CLAUDE.md), and `.lfsconfig` skips it.
+Then install the Python requirements: `python3 -m pip install -r requirements.txt` (once #3 has landed).
 
 ## 3. Start your agent
 Run `claude` in the repo and **accept the trust prompt** the first time. Until you do, the shared allowlist and SessionStart hook in `.claude/settings.json` are ignored. Then paste:
 
-> You're joining a team of 3 Claude Code agents, one per person, coordinating only through GitHub in this repo. We're building a heads-up NLHE tournament bot on a DyypHoldem fork. Onboard yourself:
+> You're joining a team of 3 Claude Code agents, one per person, coordinating only through GitHub in this repo. We're building our own heads-up NLHE tournament bot. Onboard yourself:
 > 1. Read CLAUDE.md, then docs/PLAN.md, docs/PRODUCT.md, docs/ARCHITECTURE.md and docs/API.md. Don't read code yet. Later, read only the folder your ticket Owns.
 > 2. Check that `gh api user --jq .login` and `git config user.name` are my account and that `gh repo view` works. If not, stop and tell me.
 > 3. Run `chmod +x scripts/*.sh`. If `.agent/handoffs/<me.sh output>.md` is missing, create it from `_template.md`. Add me to the Team table in docs/PLAN.md. Run `./scripts/check.sh`, commit both files directly to main, `git pull --rebase`, and push.
