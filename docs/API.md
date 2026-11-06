@@ -1,6 +1,6 @@
 # Contracts
 
-The interfaces between tickets. Code to these, and mock the other side until the real one lands. Changes follow the contract process in `CLAUDE.md`. Status: **draft v0**. The captain confirms it in #4, and the env ticket (#8) may extend it once the tournament system is known.
+The interfaces between tickets. Code to these, and mock the other side until the real one lands. Changes follow the contract process in `CLAUDE.md`. Status: **v1**. The env ticket (#8) may extend it once the tournament system is known.
 
 All imports are from the repo root (`python -m ...`).
 
@@ -86,7 +86,7 @@ def clamp_to_legal(action: Action, legal: LegalActions) -> Action: ...   # neare
 ```
 
 ## Bot registry (`bots/__init__.py`, captain)
-`make_bot(name: str, **cfg) -> Bot`. Names: `main` (`bots/main/bot.py: MainBot`), plus the harness opponents `random`, `always_call`, `always_raise_pot`. Imports are lazy, so one broken bot doesn't break the others.
+`make_bot(name: str, **cfg) -> Bot`. Names: `main` (`bots/main/bot.py: MainBot`), `v0` (`bots/v0/adapter.py: V0Bot`, #14), plus the harness opponents `random`, `always_call`, `always_raise_pot`. Imports are lazy, so one broken bot doesn't break the others. An unknown name raises `ValueError`.
 
 ## Equity (`core/equity.py`, #10)
 ```python
