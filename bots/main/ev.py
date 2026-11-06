@@ -133,7 +133,7 @@ def _stat(stats, name: str, default: float) -> float:
 def fold_share(stats, frac: float) -> float:
     """Share of their range that folds to a bet of `frac` x pot (calibrated so frac 2/3 = fold_to_bet)."""
     fb = _stat(stats, "fold_to_bet", DEFAULT_FOLD_TO_BET)
-    return float(np.clip(fb * (0.6 + 0.6 * min(frac, 1.5)), 0.0, 0.95))
+    return float(np.clip(fb * (0.8 + 0.3 * min(frac, 1.5)), 0.0, 0.95))   # many bots barely react to size
 
 
 def raise_share(stats) -> float:
