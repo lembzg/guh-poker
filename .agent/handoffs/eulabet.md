@@ -2,10 +2,10 @@
 
 <!-- Only you edit your file. Overwrite (don't append) at each checkpoint. Format: .agent/RECOVERY.md -->
 
-Updated: 2026-11-06T23:20:48+00:00
-Status: in-review
-Task: #22 Harness gauntlet (in review: #19 #20 #21)
-Branch: eulabet/22-gauntlet
+Updated: 2026-11-06T23:28:24+00:00
+Status: in-progress
+Task: #24 Postflop EV engine (in review: #19 #20 #21; watcher waits on #17)
+Branch: eulabet/24-ev
 Commit: e6f3b6c
 
 ## Done
