@@ -63,18 +63,44 @@ def test_flush_draw_calls_small_bet_folds_huge_one():
     assert postflop_action(huge, None, range_from_classes({"KK": 1, "99": 1, "K9s": 1, "AK": 1})).kind == "fold"
 
 
-def test_river_bluff_vs_folder_but_not_vs_station():
+FOLD_COUNTS = {"fold_to_bet": (40, 50), "fold_to_bet_by_street": {2: (15, 18), 3: (12, 16), 4: (13, 16)},
+               "bet_when_checked_to": (5, 30)}
+STATION_COUNTS = {"fold_to_bet": (2, 50), "fold_to_bet_by_street": {}, "bet_when_checked_to": (3, 30)}
+AUTO_BET_COUNTS = {"fold_to_bet": (10, 30), "fold_to_bet_by_street": {}, "bet_when_checked_to": (40, 45)}
+
+
+def test_river_bluff_only_with_confident_fold_data():
     s = spot("7c 6d", "As Kd Qh 3s 2c")
-    assert postflop_action(s, FOLDER, top_percent_range(0.5)).kind == "raise"
-    assert postflop_action(s, STATION, top_percent_range(0.5)).kind == "check"
+    assert postflop_action(s, FOLDER, top_percent_range(0.5), opp_counts=FOLD_COUNTS).kind == "raise"
+    assert postflop_action(s, STATION, top_percent_range(0.5), opp_counts=STATION_COUNTS).kind == "check"
+    assert postflop_action(s, FOLDER, top_percent_range(0.5), opp_counts={}).kind == "check"      # no data
 
 
-def test_thinner_bigger_value_vs_station():
+def test_pure_air_never_bluffs_without_data_but_draws_semi_bluff():
+    assert postflop_action(spot("7c 6d", "As Kd 2h"), None, top_percent_range(0.5)).kind == "check"
+    assert postflop_action(spot("Ah 5h", "Kh 9h 2c"), None, top_percent_range(0.5)).kind == "raise"
+
+
+def test_turn_barrel_needs_same_street_evidence():
+    hist = [R(1, "me", "raise", 6), R(1, "opp", "call", None), R(2, "me", "raise", 9), R(2, "opp", "call", None)]
+    s = spot("7c 6d", "As Kd Qh 2c", pot=24, history=hist)
+    thin = {"fold_to_bet": (40, 50), "fold_to_bet_by_street": {3: (5, 6)}}
+    assert postflop_action(s, FOLDER, top_percent_range(0.5), opp_counts=thin).kind == "check"
+    assert postflop_action(s, FOLDER, top_percent_range(0.5), opp_counts=FOLD_COUNTS).kind == "raise"
+
+
+def test_value_vs_station_is_thin_and_never_overbet():
     s = spot("Ah 9c", "As 8d 4h 2s 7c", pot=40)
-    a_station = postflop_action(s, STATION, top_percent_range(0.9))
-    a_default = postflop_action(s, None, top_percent_range(0.9))
-    assert a_station.kind == "raise"
-    assert a_default.kind != "raise" or a_station.raise_to >= a_default.raise_to
+    a = postflop_action(s, STATION, top_percent_range(0.9), opp_counts=STATION_COUNTS)
+    assert a.kind == "raise" and a.raise_to - s.my_committed <= 0.86 * 40
+    nuts = spot("Qh Jh", "Th 9c 8d 2s Kd", pot=40)
+    a = postflop_action(nuts, STATION, top_percent_range(0.9), opp_counts=STATION_COUNTS)
+    assert a.kind == "raise" and a.raise_to - nuts.my_committed <= 0.86 * 40
+
+
+def test_auto_bettor_called_at_pot_odds():
+    s = spot("Qd 7c", "Qs 8d 4h 2s", facing=30, pot=30)
+    assert postflop_action(s, None, top_percent_range(0.6), opp_counts=AUTO_BET_COUNTS).kind in ("call", "raise")
 
 
 def test_traps_maniac_out_of_position():
@@ -121,3 +147,10 @@ def test_features():
     k = knobs(None)
     assert not (k.station or k.folder or k.maniac)
     assert knobs(STATION).station and knobs(FOLDER).folder and knobs(MANIAC).maniac
+
+
+def test_sticky_caller_gets_big_value_bets():
+    sticky = {"fold_to_bet": (0, 80), "fold_to_bet_by_street": {}, "bet_when_checked_to": (0, 40)}
+    nuts = spot("Qh Jh", "Th 9c 8d 2s Kd", pot=40)
+    a = postflop_action(nuts, STATION, top_percent_range(0.9), opp_counts=sticky)
+    assert a.kind == "raise" and a.raise_to - nuts.my_committed >= 1.4 * 40

@@ -108,7 +108,9 @@ Performance target: `equity(..., samples=2000)` under 20 ms on a laptop.
 def preflop_action(state: GameState, opp: OpponentStats) -> Action: ...
 
 # postflop.py (#12)
-def postflop_action(state: GameState, opp: OpponentStats, opp_range: Range | None) -> Action: ...
+def postflop_action(state: GameState, opp: OpponentStats, opp_range: Range | None,
+                    time_budget_ms: float = 60, opp_counts: dict | None = None) -> Action: ...
+    # opp_counts = OpponentModel.counts(); MainBot passes the optional kwargs only if accepted
 
 # opponent.py (#13)
 class OpponentModel:
@@ -117,6 +119,8 @@ class OpponentModel:
     def stats(self) -> OpponentStats: ...
     def range_estimate(self, state: GameState) -> Range | None: ...   # opponent's likely holdings now; None = unknown
     def bluff_rate(self) -> float | None: ...                    # share of their big (>= 2/3 pot) postflop bets shown down as bluffs
+    def counts(self) -> dict: ...      # raw (hits, trials): fold_to_bet, fold_to_bet_by_street{2,3,4}, bet_when_checked_to
+    def bet_frequency(self) -> float | None: ...   # posterior mean of betting when checked to; None < 10 chances
 def classify(stats: OpponentStats) -> str: ...                   # "station" | "maniac" | "nit" | "tag" | "unknown"
 
 # fallback.py (#5)
