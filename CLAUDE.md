@@ -35,7 +35,7 @@ We are building a bot for a **heads-up no-limit hold'em bot-vs-bot tournament**.
 
 Everything runs from the **repo root** as modules (no install step beyond requirements):
 ```bash
-python -m pip install -r requirements.txt                 # once #3 lands
+python -m pip install -r requirements.txt                 # development only: the packed bot is stdlib-only
 python -m pytest -q                                      # all tests
 python -m pytest -q tests/core/test_equity.py::test_aa   # a single test
 python -m harness.run --a main --b always_call --hands 2000 --seed 1 --duplicate   # once #6 lands

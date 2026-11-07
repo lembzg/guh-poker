@@ -91,6 +91,7 @@ def test_short_stack_jam_is_a_raise_to_max():
 
 
 def test_raise_to_is_total_for_the_hand_not_for_the_street():
+    pytest.importorskip("eval7")  # without it, v0 checks instead of raising
     # Quant bets the nut flush into 12 chips: a bet this street must sit on top of the 6 already in.
     action = V0Bot(seed=1).act(STATES["flop_checked_to"])
     assert action.kind == "raise" and action.raise_to > 6 + 2
