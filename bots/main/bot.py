@@ -52,12 +52,16 @@ class _Timeout(Exception):
     pass
 
 
-def _accepts_budget(fn) -> bool:
-    """postflop_action's time_budget_ms is an optional extra beyond the contract."""
+def _accepts(fn, name: str) -> bool:
+    """postflop_action's time_budget_ms / opp_counts are optional extras beyond the contract."""
     try:
-        return "time_budget_ms" in inspect.signature(fn).parameters
+        return name in inspect.signature(fn).parameters
     except (TypeError, ValueError):
         return False
+
+
+def _accepts_budget(fn) -> bool:
+    return _accepts(fn, "time_budget_ms")
 
 
 def _run_with_timeout(fn, timeout_s: float):
@@ -190,7 +194,13 @@ class MainBot:
                     rng = model.range_estimate(state)
                 except Exception:
                     rng = None
-            return _postflop(state, self._stats(), rng, **kwargs)
+            extra = dict(kwargs)
+            if model is not None and hasattr(model, "counts") and _accepts(_postflop, "opp_counts"):
+                try:
+                    extra["opp_counts"] = model.counts()
+                except Exception:
+                    pass
+            return _postflop(state, self._stats(), rng, **extra)
         return run
 
     def _stats(self) -> OpponentStats:

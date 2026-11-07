@@ -20,3 +20,5 @@
 |---:|---|---|---|---|---|---|
 | 1 | 2026-11-07 | scope owner | scoped | Verified clean a8ecc0c checkout; fetched origin; created issue #44. #43 already includes #34/#41 and current main. | resume.sh; git fetch origin; gh pr list | Ready. |
 | 2 | 2026-11-07 | implementer | planned | Integrate #32 preflop, #42 postflop and #36 test setup in sequence, preserving own handoff and both sizing/confidence behavior. | Merge exact remote branches; inspect conflicts; full tests and arena checks. | No strategy redesign. |
+
+| 3 | 2026-11-07 | implementer | implemented | Merged #32; retained current handoff over stale #11 snapshot. #42 conflict in bluff evaluation resolved using confidence gate on actual legal effective bet, retaining #43 stack caps and terminal calls. MainBot automatically merged both counts forwarding and jam routing. | bots/main/postflop.py; bot.py; docs/API.md; #32 files | Validate interaction with a regression before acceptance. |
