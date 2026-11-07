@@ -82,3 +82,16 @@ def test_cli(capsys):
     gauntlet_main(["--a", "random", "--hands", "20", "--only", "always_call", "min_raiser", "--no-save"])
     out = capsys.readouterr().out
     assert "always_call" in out and "min_raiser" in out and "always_jam" not in out
+
+
+def test_postflop_jammer_shoves_made_hands_and_folds_air():
+    from harness.opponents import PostflopJammer
+    from tests.bots.main.test_fallback import make_state
+    j = PostflopJammer()
+    pair = make_state(("Ah", "7c"), ("7d", "Kc", "2s"))
+    assert j.act(pair) == Action("raise", pair.legal.max_raise_to)
+    air = make_state(("4h", "3c"), ("Kd", "Qc", "9s"), facing=10, pot=20)
+    assert j.act(air) == Action("fold")
+    assert j.act(make_state(("4h", "3c"), ("Kd", "Qc", "9s"))) == Action("check")
+    draw = make_state(("Ah", "5h"), ("Kh", "9h", "2c"), facing=10, pot=20)
+    assert j.act(draw).kind == "raise"
