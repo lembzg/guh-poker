@@ -32,6 +32,12 @@ How each environment field maps to `GameState` / `Action` in `docs/API.md`. Note
 4. **Short matches:** ≤ 200 hands per opponent per half, model reset each half → solid defaults matter more than slow-converging exploits; `bluff_rate` never learns (no showdown cards).
 5. **Packaging:** everything must import from helper `.py` files next to `bot.py`, and data (e.g. `core/data/preflop_ranking.json`) must be embedded or loaded in `__init__`.
 
+## Verified locally (EulaBet, 2026-11-07, their repo @8b89346, Python 3.14, no numpy)
+- `python -m adapters.arena.build --team <name>` builds a folder that `arena validate` accepts (40 hands vs @call, 0 faults) and `arena pack` turns into a 243 KB `.pkl`.
+- History entries seen in practice: `post_small_blind`, `post_big_blind`, `fold`, `check`, `call` (amount = chips added), `bet` / `raise_to` (amount = street total). Player ids `seat0`/`seat1`; `dealer_index` = small blind.
+- Their engine allows `fold` even when checking is free (our adapter turns such a fold into a check).
+- `arena match` results for MainBot (current main, fallback preflop), 300 deals = 600 hands: vs @call +2.66 bb/hand, @random +6.76, @shove +2.93, @fold +0.38, starter +0.51 (n.s.). Vs starter, 1000 deals seed 5: +0.03 (CI -0.71..+0.77) without the opponent model; **+0.55 (CI +0.00..+1.10) with #19**. Think time ~10 ms per hand (bank allows 200 ms).
+
 ## Exploitable observations
 Anything about the environment or the likely opponents we could use: deterministic deck seeds, fixed hand counts, time budget slack, opponent tendencies.
 
