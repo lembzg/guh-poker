@@ -6,7 +6,7 @@ Updated: 2026-11-07T08:13:26+00:00
 Status: idle
 Task: none open (all EulaBet tickets closed); lembzg owns final candidate #44/#45
 Branch: eulabet/overnight
-Commit: e26c1d8
+Commit: 931666d
 
 ## Done
 - #42 merged (research rules, #40/#35 closed). #48 merged (#47: incremental evaluator, equity 31-52% faster; fixes #45 CI benchmark without changing threshold — lembzg asked to rebase #45 and confirm).
