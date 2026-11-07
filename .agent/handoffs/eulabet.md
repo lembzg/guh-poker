@@ -2,32 +2,33 @@
 
 <!-- Only you edit your file. Overwrite (don't append) at each checkpoint. Format: .agent/RECOVERY.md -->
 
-Updated: 2026-11-07T00:10:37+00:00
-Status: in-progress
-Task: #8 Arena adapter + pack (#19 awaiting lembzg approval)
-Branch: eulabet/8-arena-adapter
-Commit: none
+Updated: 2026-11-07T11:28:23+00:00
+Status: waiting
+Task: Entry packed as gemiclaudex.pkl; human uploads. PR #54 (all-in fix into #45) awaits lembzg.
+Branch: eulabet/final-allin-fix
+Commit: 6678564
 
 ## Done
-- Merged: #15 equity, #18 harness, #23 gauntlet, #25/#28 EV engine (tool), #20 postflop, #21 MainBot, #30 pure-Python runtime.
-- Rules + environment recorded in docs/PRODUCT.md, docs/ENVIRONMENT.md (organisers' site + repo Manchester-AI-Society/poker_bot_infrastructure).
+- Entry: results/submission/gemiclaudex.pkl (545 KB, sha256 a2f5d8ed2bd57e338f44f6971b967b3cd7b60463427dddf308e210af6f3a0258), packed by organisers' arena pack from eulabet/final-allin-fix @6678564 = lembzg final (1177bfe) + all-in censoring fix. Team name gemiclaudex (human chose GemiClaudEx; arena requires lowercase).
+- Fix: bots/main/allin.py scales hidden-fold open-jam evidence by 0.45 instead of zeroing. A/B seeds 41+43, 16 opponents, 0 faults: vs @shove +2.36, mean +0.09, no regression. PR #54 ready, reviewer lembzg.
+- Earlier today: #48 equity speed, #51 archetypes, #52 MDF dial (off), #53 per-street bluff (rejected, data on issue). Overnight sim (lembzg, 11.8M hands): keep defaults.
+- Codex rivals (4) tested: combined beats balanced/cautious, ~even vs aggressive/mathematical across seeds.
 
 ## In progress
-- #8: adapters/arena (their PokerBot/GameState ↔ our contract), build folder + arena pack/validate locally.
+- Human uploads gemiclaudex.pkl via the submission form before 18:00.
 
 ## Files touched
-- adapters/arena/, tests/adapters/
+- bots/main/allin.py, tests/bots/main/test_allin.py (this branch)
 
 ## Tests
-- main suite green except tests/bots/v0 eval7 test (eval7 not installable).
+- PATH=.venv/bin:$PATH ./scripts/check.sh → 227 passed, 2 skipped (lembzg's check.sh uses system python3; use venv).
+- Sanity from packed folder (300 deals seed 77): starter +0.51, shove +3.22, random +4.65, 0 faults.
 
 ## Bugs / blockers
-- Deadline 18:00 event day. Team name for arena pack still unknown (ask human).
-- v0 needs eval7 → unusable in sandbox (told lembzg on #27/#8).
+- Optional: BB preflop defence vs wide raisers (lembzg's preflop) — data on #45.
 
 ## Decisions & dependencies
-- Organisers' infra cloned at scratchpad/infra (8b89346). Their history: post_small_blind/post_big_blind, call amount = chips added, bet/raise_to amount = street total, player ids seatN.
+- Entry = lembzg final + all-in fix. Re-upload only for a change that wins on fresh deals (2 seeds).
 
 ## Next steps
-1. Finish adapter + tests; build bot folder; run arena validate/match/pack with Python 3.14 venv.
-2. Ask human for team name; produce .pkl.
+1. Confirm human uploaded; if lembzg merges #54/#45 later and changes anything, rebuild: python -m adapters.arena.build --team gemiclaudex --strategy combo --preflop-dir bots/myteam, then arena validate + pack.
