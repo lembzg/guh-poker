@@ -70,9 +70,11 @@ def pairing(job):
             time_cap_seconds=job["timeout"]-5), hand_sink=sink)
     halves.append(a._stretch_think)
     summaries = {}
+    entry_errors = 0
     if (directory / "candidate.log").exists():
         with (directory / "candidate.log").open(encoding="utf-8", errors="replace") as stream:
             for line in stream:
+                entry_errors += "act() failed, playing safe:" in line or "record_own() failed:" in line
                 if "OVERNIGHT_METRICS " in line:
                     try:
                         packet = json.loads(line.split("OVERNIGHT_METRICS ", 1)[1])
@@ -82,6 +84,7 @@ def pairing(job):
     return {"ok": True, "result": result.to_dict(), "latency": latency,
             "actions": dict(actions), "hand_counts": dict(counts), "worst_hands": worst,
             "positions": positions, "bot_metrics": summaries,
+            "entry_errors": entry_errors,
             "bank_fraction_max": max(halves, default=0)/(job["deals"]*RULES["think_budget_per_deal"])}
 
 

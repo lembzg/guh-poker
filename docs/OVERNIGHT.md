@@ -41,6 +41,14 @@ builder compatibility. Until #32 merges, the default helper source is the fetche
 `--preflop-ref origin/YOUR-REVIEWED-BRANCH`, or `--preflop-dir /absolute/path/to/bots/myteam`.
 The report records precisely which source and table fingerprints were used.
 
+Alternatively pass `--bot-ref origin/REVIEWED-BOT-BRANCH` to preparation. This freezes that revision's
+`core/`, `bots/` and `adapters/` into the experiment while retaining the runner from this branch.
+It does not checkout, merge or change either revision. A revision containing `bots/myteam` supplies
+its own preflop helpers unless explicitly overridden. The default is the runner branch's current bot.
+Default thresholds and adapter/strategy signatures are checked; incompatible baselines fail loudly.
+The report records the runner SHA, bot SHA and helper fingerprints separately. Do not select an
+unreviewed branch merely because it has a newer timestamp.
+
 ## 2. Prepare only (safe before bedtime)
 
 ```bash
@@ -125,7 +133,9 @@ The morning recommendation requires at least 30 complete final-test blocks, a po
 lower confidence bound, at least +0.005 bb/hand (+0.5 bb/100) estimated improvement, no candidate or
 reference reliability failures, and no family with a 95% upper bound below -0.10 bb/hand relative to
 defaults. Otherwise it says to keep defaults. No significance or improvement is promised.
-Student-t intervals remain approximate for non-normal returns. Individual-family comparisons and
+Internal strategy errors/timeouts, adapter errors and entry fallbacks also disqualify evidence even
+if the arena safely played a move and recorded no fault. Intentional bank-guard fallbacks are counted
+and reported separately. Student-t intervals remain approximate for non-normal returns. Individual-family comparisons and
 development rankings are exploratory, not a second selection process. Timeout/phase-censored
 incomplete blocks are reported as missing coverage. Real faults are retained and disqualify evidence;
 large profits against a broken opponent are not accepted.

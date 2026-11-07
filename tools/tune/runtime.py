@@ -22,8 +22,8 @@ def configure(config):
     if config["bluff_mode"] != "original":
         from core.interface import Action
         original_knobs, checked, facing = pf.knobs, pf._checked_to, pf._facing_bet
-        def knobs(opp):
-            k = original_knobs(opp)
+        def knobs(opp, *args, **kwargs):
+            k = original_knobs(opp, *args, **kwargs)
             values = dict(vars(k))
             values["observed_fold"] = getattr(opp, "fold_to_bet", None) is not None
             values["observed_cbet"] = getattr(opp, "fold_to_cbet", None) is not None
@@ -66,3 +66,6 @@ def configure_instance(inner, config):
     if post_model is None:
         raise RuntimeError("combined candidate requires the #19 opponent model")
     post_model.min_samples = config["model_obs"]
+    if config["model_obs"] >= 100000 and hasattr(post_model, "counts"):
+        # Newer research policies also consume raw counts; freeze those in the fixed-prior ablation.
+        post_model.counts = lambda: {}

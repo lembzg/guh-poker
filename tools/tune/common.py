@@ -80,10 +80,10 @@ def cpu_budget(requested=None):
         if requested < 1:
             raise ValueError("workers must be positive")
         budget = min(budget, requested)
-    # Leave at least 2GB for OS; each simultaneous pairing reserves 0.75GB.
+    # Leave at least 2GB for OS; copied sub-1MB policies reserve 0.35GB per simultaneous pairing.
     available = available_memory()
     if available:
-        budget = min(budget, max(1, int((available - 2 * 1024**3) / (0.75 * 1024**3))))
+        budget = min(budget, max(1, int((available - 2 * 1024**3) / (0.35 * 1024**3))))
     return budget
 
 
@@ -110,6 +110,12 @@ def available_memory():
 def ensure_disk(path, minimum_gb=4):
     if shutil.disk_usage(path).free < minimum_gb * 1024**3:
         raise RuntimeError(f"Less than {minimum_gb}GB free; stopping safely without deleting results")
+
+
+def ensure_memory():
+    available = available_memory()
+    if available is not None and available < 1024**3:
+        raise RuntimeError("Less than 1GB available RAM; stopping safely before memory exhaustion")
 
 
 def stop_tree(proc):

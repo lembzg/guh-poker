@@ -150,7 +150,8 @@ def export(run, plan, state, rows, *, final=False):
              "All scores below are bb/100; family-balanced paired differences compare the same deals with defaults.",
              f"Completed match records: {len(rows)}; healthy: {sum(healthy(r) for r in rows)}; "
              f"played hands: {sum(r.get('result', {}).get('hands_played', 0) for r in rows):,}.", "",
-             f"Frozen source {plan['repo_sha']}; arena {plan['arena_sha']}; plan {plan['plan_hash']}.", "",
+             f"Frozen runner {plan['repo_sha']}; bot {plan.get('bot_sha', plan['repo_sha'])}; "
+             f"arena {plan['arena_sha']}; plan {plan['plan_hash']}.", "",
              "## Final test (locked finalist, fresh seeds and unseen families)", ""]
     if state.get("last_error"):
         lines[3:3] = [f"Stopped/error: {state['last_error']}", ""]

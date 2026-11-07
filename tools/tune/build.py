@@ -33,7 +33,7 @@ def snapshot(root, target, ref="HEAD"):
 
 
 def prepare(repo, arena, run, *, preflop_dir=None, preflop_ref="origin/lembzg/11-preflop-arena",
-            count=32, seed=20261107, hours=8.0, deals=200, rules_file=None):
+            bot_ref=None, count=32, seed=20261107, hours=8.0, deals=200, rules_file=None):
     repo, arena, run = Path(repo).resolve(), Path(arena).resolve(), Path(run).resolve()
     if run.exists():
         raise RuntimeError(f"Run directory already exists: {run}; use plan/report/resume, never overwrite")
@@ -56,6 +56,12 @@ def prepare(repo, arena, run, *, preflop_dir=None, preflop_ref="origin/lembzg/11
     source = run / "source"
     source.mkdir()
     repo_sha = snapshot(repo, source / "repo")
+    bot_sha = repo_sha
+    if bot_ref:
+        bot_sha = snapshot(repo, source / "bot", bot_ref)
+        for folder in ("core", "bots", "adapters"):
+            shutil.rmtree(source / "repo" / folder)
+            shutil.copytree(source / "bot" / folder, source / "repo" / folder)
     arena_sha = snapshot(arena, source / "arena")
     helpers = source / "preflop"
     helpers.mkdir()
@@ -68,12 +74,13 @@ def prepare(repo, arena, run, *, preflop_dir=None, preflop_ref="origin/lembzg/11
             ["git", "-C", str(repo), "show", f"{preflop_sha}:bots/myteam/{name}"]))
         (helpers / name).write_bytes(content)
         ast.parse(content, filename=name)
+    validate_contract(source / "repo", helpers)
     # Pin this runner too. Resume always re-execs the frozen runner, not a newer working copy.
     required = ["tools/tune/overnight.py", "adapters/arena/combo_bot_example.py", "bots/main/opponent.py"]
     if any(not (source / "repo" / name).is_file() for name in required):
         raise RuntimeError("Commit the overnight runner and combined candidate before preparing a run")
     plan = dict(schema=1, prepared_utc=dt.datetime.now(dt.timezone.utc).isoformat(),
-                repo_sha=repo_sha, arena_sha=arena_sha, preflop_sha=preflop_sha,
+                repo_sha=repo_sha, bot_sha=bot_sha, arena_sha=arena_sha, preflop_sha=preflop_sha,
                 source_hash=tree_hash(source), rules=RULES, rules_source=SITE+"/data/submitting.md",
                 rules_hash=digest(rules_text), seed=seed, hours=hours, deals=deals,
                 candidates=initial_candidates(count, seed), fields=fields(),
@@ -94,6 +101,24 @@ def prepare(repo, arena, run, *, preflop_dir=None, preflop_ref="origin/lembzg/11
     plan["plan_hash"] = digest(plan)
     atomic_json(run / "plan.json", plan)
     return plan
+
+
+def validate_contract(repo, helpers):
+    """Fail loudly if source defaults/signatures no longer match the declared experiment."""
+    checks = [(repo / "bots/main/postflop.py", "RAISE_EQ", 0.75),
+              (repo / "bots/main/opponent.py", "MIN_SAMPLES", 12), (helpers / "opponent.py", "MIN_OBS", 15)]
+    for path, name, expected in checks:
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        values = {target.id: ast.literal_eval(node.value) for node in tree.body
+                  if isinstance(node, ast.Assign) and isinstance(node.value, ast.Constant)
+                  for target in node.targets if isinstance(target, ast.Name)}
+        if values.get(name) != expected:
+            raise RuntimeError(f"Unsupported default {name} in {path}; review/update the declared baseline first")
+    tree = ast.parse((repo / "bots/main/postflop.py").read_text(encoding="utf-8"))
+    functions = {node.name: node for node in tree.body if isinstance(node, ast.FunctionDef)}
+    for name, count in (("_checked_to", 8), ("_facing_bet", 8), ("_bet", 2)):
+        if name not in functions or len(functions[name].args.args) != count:
+            raise RuntimeError(f"Unsupported postflop interface {name}; refusing to tune incompatible source")
 
 
 def copy_runtime(run, out):
@@ -139,6 +164,7 @@ class EvaluationBot(PokerBot):
     def summary(self, final=True):
         print("OVERNIGHT_METRICS " + json.dumps(dict(seat=self.seat, final=final,
             decisions=self.decisions, fallbacks=dict(self.inner._post.bot.fallbacks),
+            adapter_errors=self.inner._post.errors,
             observed_hands=self.inner._post.bot.model.hands)), flush=True)
 
     def act(self, state):

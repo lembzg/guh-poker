@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 
 from .build import build_candidate, prepare
-from .common import (atomic_json, cpu_budget, digest, ensure_disk, python_guard,
+from .common import (atomic_json, cpu_budget, digest, ensure_disk, ensure_memory, python_guard,
                      read_json, reap_orphans, run_process, seed_for, tree_hash)
 from .report import export
 from .space import offspring
@@ -161,6 +161,7 @@ class Runner:
             try:
                 while pending or active:
                     ensure_disk(self.run)
+                    ensure_memory()
                     while pending and not self.stop.is_set() and boundary-time.monotonic() > 20:
                         index = next((i for i, j in enumerate(pending)
                                       if min(j["cost"], self.budget)+used <= self.budget), None)
@@ -355,6 +356,7 @@ def main(argv=None):
     prep.add_argument("--run-dir", type=Path, required=True)
     prep.add_argument("--preflop-dir", type=Path)
     prep.add_argument("--preflop-ref", default="origin/lembzg/11-preflop-arena")
+    prep.add_argument("--bot-ref", help="reviewed bot commit/ref; keep this runner but freeze its core/bots/adapters")
     prep.add_argument("--candidates", type=int, default=32)
     prep.add_argument("--seed", type=int, default=20261107)
     prep.add_argument("--hours", type=float, default=8)
@@ -372,6 +374,7 @@ def main(argv=None):
         python_guard()
         value = prepare(Path(__file__).resolve().parents[2], args.arena_root, run,
                         preflop_dir=args.preflop_dir, preflop_ref=args.preflop_ref,
+                        bot_ref=args.bot_ref,
                         count=args.candidates, seed=args.seed, hours=args.hours, rules_file=args.rules_file)
         print(value["message"])
         print(f"Frozen {len(value['candidates'])} candidates; plan {value['plan_hash']}; run directory {run}")

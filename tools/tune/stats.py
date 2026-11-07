@@ -85,15 +85,22 @@ def valid(row):
             and r.get("deals_completed") == row["deals"] and r.get("mean_bb") is not None)
 
 
+def internal_failure(row):
+    return any(
+        packet.get("adapter_errors", 0) or any(packet.get("fallbacks", {}).get(reason, 0)
+        for reason in ("error", "timeout", "unavailable", "observe_error"))
+        for packet in row.get("bot_metrics", {}).values()) or bool(row.get("entry_errors", 0))
+
+
 def healthy(row):
     r = row.get("result", {})
     return (valid(row) and not r.get("faults_a") and not r.get("faults_b")
-            and not r.get("disabled_a") and not r.get("disabled_b"))
+            and not r.get("disabled_a") and not r.get("disabled_b") and not internal_failure(row))
 
 
 def reliability_failure(row):
     r = row.get("result", {})
-    if r.get("faults_a") or r.get("faults_b") or r.get("disabled_a") or r.get("disabled_b"):
+    if r.get("faults_a") or r.get("faults_b") or r.get("disabled_a") or r.get("disabled_b") or internal_failure(row):
         return True
     # End-of-phase cancellation is missing evidence, never a bot fault or a usable score.
     return not healthy(row) and not row.get("censored", False)
