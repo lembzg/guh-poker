@@ -6,7 +6,7 @@ Updated: 2026-11-07T11:37:30+00:00
 Status: waiting
 Task: Entry v2 packed (entry rate 0.80); human re-uploads. PR #54 awaits lembzg.
 Branch: eulabet/final-allin-fix
-Commit: 6678564
+Commit: cadc32f
 
 ## Done
 - v2 entry: results/submission/gemiclaudex.pkl sha256 ac7515a0066df0bfb92d03dc73985a49b4c4399144d95b589230d137717aac81 from eulabet/final-allin-fix @1876919 (HIDDEN_SB_ENTRY 0.80: +1.06 vs @shove, mean +0.08, 0 faults). v1 kept as gemiclaudex-v1-0.45.pkl.bak.
