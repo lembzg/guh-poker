@@ -137,14 +137,17 @@ def test_known_terminal_folds_are_learning_opportunities():
     assert m.share(replace(s, history=s.history+(ActionRecord(1,'opp','raise',200),))) < .12
 
 
-def test_partial_arena_data_does_not_infer_sb_jam_frequency_from_visible_raises():
+def test_partial_arena_data_scales_sb_jam_frequency_instead_of_ignoring_it():
+    """Invisible SB folds make the exact open-jam frequency unknowable, but ignoring visible jams kept the 10%
+    prior all half vs an always-shover: -3.7 bb/hand vs @shove in the organisers' engine (#45 review). Visible
+    jams now count, scaled by an assumed SB entry rate (HIDDEN_SB_ENTRY)."""
     m = JamModel()
     m.complete_hands = False
-    s = spot()  # villain is SB, opens; invisible folds make frequency unknowable
+    s = spot()  # villain is SB, opens
     for _ in range(100):
         m.observe(s)
         m.finish_hand()
-    assert m.share(s) == .10
+    assert .35 < m.share(s) < .5
 
 
 def test_v0_learns_blinds_before_nonterminal_observations():
@@ -167,3 +170,23 @@ def test_v0_learns_blinds_before_nonterminal_observations():
 def test_fallback_calls_other_provably_unbeatable_hands(hole, board):
     s = spot(hole_cards=hole, board=board, street={3:2,5:4}[len(board)])
     assert fallback_action(s) == Action('call')
+
+
+def test_hidden_sb_folds_scale_but_keep_open_jam_evidence():
+    """#45 review: in the arena BB half (complete_hands=False) visible open jams still count, scaled by an
+    assumed SB entry rate, so an always-shover is not stuck at the 10% prior."""
+    from bots.main.allin import HIDDEN_SB_ENTRY
+    m = JamModel()
+    m.complete_hands = False
+    s = spot()
+    assert m.share(s) == .10                     # no evidence yet: prior
+    for _ in range(50):
+        m.finish_hand()
+        m.observe(s)
+    expected = (50 * HIDDEN_SB_ENTRY + 8 * .10) / (50 + 8)
+    assert m.share(s) == pytest.approx(expected) and m.share(s) > .35
+    full = JamModel()
+    for _ in range(50):
+        full.finish_hand()
+        full.observe(s)
+    assert full.share(s) > m.share(s)             # complete view still trusts the raw ratio more
