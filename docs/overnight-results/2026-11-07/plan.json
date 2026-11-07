@@ -1,0 +1,1010 @@
+{
+  "arena_sha": "8b893461c0d020ae8ed9c78aed298cd698e025a0",
+  "artifact_hashes": {
+    "candidates/baseline": "401953152d5baa03335998b6f7f61ff2160dd2a68ef912a5910c550166fd61df",
+    "candidates/v-0a4ce28223af": "1135dfa5eaf7578a0b4b79da41aa45ca42fdf032f0c9ac150fda8d22bc0655da",
+    "candidates/v-0ad5218e0a12": "47ef460f95ac965b4115208d27eb386e936202c95497015e3cbc824e84a8cff8",
+    "candidates/v-19a472bdae59": "0dbb6acdb3788279889ce7daaf20be49102c6004ba9bb0aa6b97f2ce7c3a34b2",
+    "candidates/v-252f3b5906f7": "acc15d35d9842a6bd22a3d03c5c46cef61628b04944ffec532df1fced045d023",
+    "candidates/v-256fcb0ed9f4": "0faf0e49867a5a6ea0f230c31151cf3a3e9a5775de16dc26c2a88738441cbf3a",
+    "candidates/v-31620b5d0fb1": "dff7f58a46056fa5cad66878a010f8c4ad2265739ced3839217ef343c6ff8f22",
+    "candidates/v-52ff30a3c613": "9ac164bc3c28a00cc375ce2f48b241a65bafa6e426c4c14397c3265d95f9d371",
+    "candidates/v-66901b3ec58f": "f81b3ac4af41a5e6e5edaae3aea4a4c49ee6d8e1a4100a2924992f2146699d4d",
+    "candidates/v-67f7b4418209": "82af3365060485f1bfccf08e4181e6aec98fd58d438fbf65df7b2336b7441e3d",
+    "candidates/v-7028f8aa1a9e": "43ae0e0d59ac7f8aa1c0c2a11a8f27088ba35cbf6a0a4cd40410803505b922ff",
+    "candidates/v-7175bd690aa6": "950da1e4f8e7054282e00f4eb68310f034d24ccf70c5aa4c3212064722ced45c",
+    "candidates/v-77c2c13b242e": "f094c750a001661e12c02315e804138ae78f7b7b313273ee903af6a7c1783413",
+    "candidates/v-81d774968fb7": "481c4ee6cfa1bf4657d6056081cf339811ee4cea97f7e54aa5ed8470b6cd1be1",
+    "candidates/v-841f77346b2f": "b19ddc8ea63650a1659889c4b7e323cb2d8d69c6e5808686570ce7e2e570e31c",
+    "candidates/v-860f939068c7": "749f2a58670be54cccae586d1d5f4e4e40e2969b96d70b3e2a54cdd1afaf5e50",
+    "candidates/v-8b112be0db57": "add39cac61cef0e171340471930055f05282c9ea11b54bc60bb577a09a67a6e8",
+    "candidates/v-96e330f87e2d": "da86fc9cd5eefa1eb8898f94004e8dd369090de6342e32d4432f33c20529b41e",
+    "candidates/v-978730ce9ffa": "2ac2b9a60d69f76959753a082bede397d947b09bd22de6ebb56fa96db4f32c0a",
+    "candidates/v-a0a783fc39a0": "964f992fc4d08ca3cabd4c11f4b28ee10c503623fd17002a45b37c001b49557a",
+    "candidates/v-a60fabac2056": "deb0ece313c0189fdd41d22fbb4ccce567a1f9d297d7fc9d9cb1ec3f23009262",
+    "candidates/v-b32cb9d7b29f": "2f39aa900c445d2ce9b144bfa3c3cf28adadc907e5b7fbc5a2bcc8cfb60efe76",
+    "candidates/v-c0060a9ac2ca": "7321e3c248b8f9fd3bdaff963ebd413885ab6aaaf679fc9da63f554321388af9",
+    "candidates/v-c1dd7d79ba2c": "fa91db973dc0b5b4cb4d11dc1a0d827d04b6451bad8bb77c23d452431a245e5f",
+    "candidates/v-c24e068b3f80": "8473e0165c3e238e68dc2bbfdc737e5b5fbfa7a9697aeac2a0ef4d5723a9730a",
+    "candidates/v-c6e644725748": "96a8cda9998a35cc97c637d51df53c4c03ae1e2e417375c9cd67c64c65322d4d",
+    "candidates/v-dca8da935635": "934992d36ada64ed97a7d422287959221392f87d9ca8625e74890fd1f14215c5",
+    "candidates/v-e4b3759ccbca": "f3c0a09b062f87b7266ade72ba67c3c68ca762b881b8bd2e2a7b6c026c2c2fd2",
+    "candidates/v-e65549e36908": "1479b2b91f0e9a22cdbfb4e95ed8adf05318c2d842dd6f4ab55378d2d2ccabf5",
+    "candidates/v-e65d303d1979": "f291ca12b308b4607128f1b181716848198bf4a381423308a73efcbff7b2e89f",
+    "candidates/v-e85db4206b3a": "d14c26417372ff8709adb48624c748011eec935a7e56b5f30c7e89c5967ed3f5",
+    "candidates/v-ee1e9f3efda7": "ac193d39dc90024d7799c68a44b2fe435706e868e32b81ead2ef4a05ea4f4519",
+    "opponents/search-equity-0": "74fb5264966701e0af836dca6b52f9f6106c692d41b4ee5b06823d0cec23ffcf",
+    "opponents/search-equity-1": "92afdf87789bd8780438eb01cd3022b7a878ee1f951b768da64026a3ce832ab3",
+    "opponents/search-maniac-0": "1321caee3ef5a02acc95d183da9c77f641eac76921d3075a3014fb6e2dcf6295",
+    "opponents/search-maniac-1": "df54e0d9111097cd2821364e7a2e75f7ede07346f075400da19153bf1c9f615e",
+    "opponents/search-minraise-0": "8ea72eee641e6bc876ac43c970430d354e70a4d525d49e001ef70742128025a0",
+    "opponents/search-minraise-1": "27e966b92d20d6f454053fb911eadbe65168ab713b8c8d7cccc6cfe9066025e0",
+    "opponents/search-nit-0": "7f02defd95e8dcfd2189dafb880ce3209f65cd2535e1fd4a7cad1c30452ea17b",
+    "opponents/search-nit-1": "ed3edd3dd637c2ccd9fe1fb55b21843aceb360fab21bc3a2d78ab0373bd27593",
+    "opponents/search-shove-0": "25273283a7ce8db438628f6daf788d084ca9096063c5e2e40e55561f2a70637a",
+    "opponents/search-shove-1": "fc79994c3ed2154c50be5c2809ecf5f126934bf75e310ecbca750ea8d30285d1",
+    "opponents/search-starter-0": "e07ea488db8925f964db8e52c3ce083d5af356dec3c164b09d813e6e66bbdd10",
+    "opponents/search-starter-1": "af1b52d19c02c68021b4636290b64de43733d0a35a9008b60bac531aaded8c55",
+    "opponents/search-station-0": "9a0c7abf1e39b142922d6d5193400848d2ef9e67b8be14bf5cc7f59709eb0339",
+    "opponents/search-station-1": "a2d3b753807332ce99231e6943b22ea54fb38955db32e8d309713ec8f564bb21",
+    "opponents/search-threebet-0": "80b91fceb078eb4b23b444645bd1ee2ca064ab508000661efe00a5a5e5de0bed",
+    "opponents/search-threebet-1": "f4623d11fc59b5c70709c64004a4fc08079e9007451fc44cb6962007fc2eb8dd",
+    "opponents/test-combined_reference-0": "401953152d5baa03335998b6f7f61ff2160dd2a68ef912a5910c550166fd61df",
+    "opponents/test-delayed_bluff-0": "d1e1af116b252678452b985732f39a9606cc4492413590b4c6ba194a6e3b8354",
+    "opponents/test-equity-0": "3fac3e56b06548dc37065d9b6e7f92c1fb53d8ed25522fd59a7efdead77791a7",
+    "opponents/test-main_reference-0": "c72bf13c75695c6e6efee0d7435b4fae4e2c6f44f6bb8b6b290962d38292c3b4",
+    "opponents/test-maniac-0": "0f1746dc7ab901d3793e76f48d999976a4d666f4326e77ef0348614d045837df",
+    "opponents/test-minraise-0": "26428d12cc8358fe59def4cfee1ae40834233e974694bb1fbbf57dd671acd0fb",
+    "opponents/test-nit-0": "896cb2f668de2245e27e7a77f2a5b7ecc29647782bf1fb50675ccf72b116c0ac",
+    "opponents/test-postflop_jammer-0": "02d5add0823debfd1f211f8d7a4f0a7517dacf2e4aaa74313c4a8035ef827db6",
+    "opponents/test-shove-0": "e4dfb387ca877b498bad40c00fb4dedceff164b2330a1ad2213be699bade0c50",
+    "opponents/test-starter-0": "d8de39a91418250dffe4e4055eb17f90de8b51a5f85727b235535f4690f2fe9e",
+    "opponents/test-station-0": "1939cf00f6f6ebf1b1227f0ce177bbfe825c52bf498b4d46f16564a170c84836",
+    "opponents/test-switcher-0": "5626364d2192fdd8a7357a6bcc5281b2195cc12623e5018f4fbf839d374b29cb",
+    "opponents/test-threebet-0": "fe91b6b95848b9e3f993793d769c5ba697c5cfd2854edced8df689cb9609a016",
+    "opponents/test-trapper-0": "2b552c2d4843aafc1a902bca346e71e2b631e159cd837a2988307e55a95c9dc5",
+    "opponents/validation-equity-0": "ac9896e926e9663902a77c0349ae0c620332c406e11fe3ca9d29a1c44d96c5de",
+    "opponents/validation-maniac-0": "701ea4a2f19d838869ed8a9cf73bcb1dfae7a42957030d9ee1a81853addc56b1",
+    "opponents/validation-minraise-0": "7d0eaef3fc49af5b5a50c7491a8d4ef8ce3ec08893ddb7119e448b790117917b",
+    "opponents/validation-nit-0": "afd5dc5233b7746029aa6a41797636c2aee1c9343937754ceec9c542f15c370c",
+    "opponents/validation-shove-0": "88cf2c3f40d740b8fa93e4677ff6c752d3c31242c1e9aaea32709571d8602397",
+    "opponents/validation-starter-0": "ad498231ea8ed742dc14a6161cf267ca712c5af8beae30410b9c4003073c81de",
+    "opponents/validation-station-0": "19261d1da7b9b43a3be364bb19e7d2848c68fb0dce9ba3ebd5f12ea1771063ba",
+    "opponents/validation-threebet-0": "b730bdb1f5ec0454b0e9d84cb193be496a5c598ba5b908cf3cd85e2d9a94ba0f"
+  },
+  "bot_sha": "1177bfe68b9319baafd017f608fe5debba438899",
+  "candidates": [
+    {
+      "config": {
+        "bet_scale": 1.0,
+        "bluff_fold": 0.6,
+        "bluff_mode": "original",
+        "call_shift": 0.0,
+        "min_obs": 15,
+        "model_obs": 12,
+        "open_shift": 0.0,
+        "raise_eq": 0.75,
+        "three_bet_scale": 1.0,
+        "value_shift": 0.0
+      },
+      "id": "baseline"
+    },
+    {
+      "config": {
+        "bet_scale": 1.0,
+        "bluff_fold": 0.6,
+        "bluff_mode": "off",
+        "call_shift": 0.0,
+        "min_obs": 15,
+        "model_obs": 12,
+        "open_shift": 0.0,
+        "raise_eq": 0.75,
+        "three_bet_scale": 1.0,
+        "value_shift": 0.0
+      },
+      "id": "v-ee1e9f3efda7"
+    },
+    {
+      "config": {
+        "bet_scale": 1.0,
+        "bluff_fold": 0.6,
+        "bluff_mode": "measured",
+        "call_shift": 0.0,
+        "min_obs": 15,
+        "model_obs": 12,
+        "open_shift": 0.0,
+        "raise_eq": 0.75,
+        "three_bet_scale": 1.0,
+        "value_shift": 0.0
+      },
+      "id": "v-81d774968fb7"
+    },
+    {
+      "config": {
+        "bet_scale": 1.0,
+        "bluff_fold": 0.6,
+        "bluff_mode": "single",
+        "call_shift": 0.0,
+        "min_obs": 15,
+        "model_obs": 12,
+        "open_shift": 0.0,
+        "raise_eq": 0.75,
+        "three_bet_scale": 1.0,
+        "value_shift": 0.0
+      },
+      "id": "v-31620b5d0fb1"
+    },
+    {
+      "config": {
+        "bet_scale": 1.0,
+        "bluff_fold": 0.6,
+        "bluff_mode": "original",
+        "call_shift": 0.0,
+        "min_obs": 100000,
+        "model_obs": 100000,
+        "open_shift": 0.0,
+        "raise_eq": 0.75,
+        "three_bet_scale": 1.0,
+        "value_shift": 0.0
+      },
+      "id": "v-a0a783fc39a0"
+    },
+    {
+      "config": {
+        "bet_scale": 1.0,
+        "bluff_fold": 0.6,
+        "bluff_mode": "off",
+        "call_shift": -0.01,
+        "min_obs": 10,
+        "model_obs": 20,
+        "open_shift": 0.0,
+        "raise_eq": 0.8,
+        "three_bet_scale": 1.2,
+        "value_shift": 0.015
+      },
+      "id": "v-8b112be0db57"
+    },
+    {
+      "config": {
+        "bet_scale": 0.8,
+        "bluff_fold": 0.55,
+        "bluff_mode": "single",
+        "call_shift": 0.01,
+        "min_obs": 25,
+        "model_obs": 12,
+        "open_shift": 0.0,
+        "raise_eq": 0.75,
+        "three_bet_scale": 0.8,
+        "value_shift": -0.03
+      },
+      "id": "v-c0060a9ac2ca"
+    },
+    {
+      "config": {
+        "bet_scale": 1.2,
+        "bluff_fold": 0.55,
+        "bluff_mode": "off",
+        "call_shift": -0.02,
+        "min_obs": 15,
+        "model_obs": 30,
+        "open_shift": -0.15,
+        "raise_eq": 0.75,
+        "three_bet_scale": 1.2,
+        "value_shift": -0.015
+      },
+      "id": "v-66901b3ec58f"
+    },
+    {
+      "config": {
+        "bet_scale": 1.0,
+        "bluff_fold": 0.6,
+        "bluff_mode": "off",
+        "call_shift": -0.02,
+        "min_obs": 40,
+        "model_obs": 20,
+        "open_shift": -0.15,
+        "raise_eq": 0.8,
+        "three_bet_scale": 1.2,
+        "value_shift": -0.015
+      },
+      "id": "v-e85db4206b3a"
+    },
+    {
+      "config": {
+        "bet_scale": 0.8,
+        "bluff_fold": 0.65,
+        "bluff_mode": "original",
+        "call_shift": -0.02,
+        "min_obs": 15,
+        "model_obs": 12,
+        "open_shift": 0.0,
+        "raise_eq": 0.75,
+        "three_bet_scale": 0.8,
+        "value_shift": -0.03
+      },
+      "id": "v-67f7b4418209"
+    },
+    {
+      "config": {
+        "bet_scale": 1.0,
+        "bluff_fold": 0.65,
+        "bluff_mode": "original",
+        "call_shift": 0.01,
+        "min_obs": 25,
+        "model_obs": 30,
+        "open_shift": 0.0,
+        "raise_eq": 0.75,
+        "three_bet_scale": 1.0,
+        "value_shift": -0.03
+      },
+      "id": "v-96e330f87e2d"
+    },
+    {
+      "config": {
+        "bet_scale": 1.0,
+        "bluff_fold": 0.65,
+        "bluff_mode": "measured",
+        "call_shift": 0.02,
+        "min_obs": 15,
+        "model_obs": 30,
+        "open_shift": 0.15,
+        "raise_eq": 0.8,
+        "three_bet_scale": 0.8,
+        "value_shift": 0.03
+      },
+      "id": "v-19a472bdae59"
+    },
+    {
+      "config": {
+        "bet_scale": 1.0,
+        "bluff_fold": 0.55,
+        "bluff_mode": "single",
+        "call_shift": 0.0,
+        "min_obs": 10,
+        "model_obs": 30,
+        "open_shift": -0.15,
+        "raise_eq": 0.7,
+        "three_bet_scale": 1.2,
+        "value_shift": 0.015
+      },
+      "id": "v-c24e068b3f80"
+    },
+    {
+      "config": {
+        "bet_scale": 1.0,
+        "bluff_fold": 0.65,
+        "bluff_mode": "measured",
+        "call_shift": -0.01,
+        "min_obs": 15,
+        "model_obs": 8,
+        "open_shift": 0.15,
+        "raise_eq": 0.75,
+        "three_bet_scale": 0.8,
+        "value_shift": 0.015
+      },
+      "id": "v-52ff30a3c613"
+    },
+    {
+      "config": {
+        "bet_scale": 0.8,
+        "bluff_fold": 0.6,
+        "bluff_mode": "single",
+        "call_shift": -0.01,
+        "min_obs": 15,
+        "model_obs": 8,
+        "open_shift": -0.15,
+        "raise_eq": 0.8,
+        "three_bet_scale": 0.8,
+        "value_shift": -0.015
+      },
+      "id": "v-a60fabac2056"
+    },
+    {
+      "config": {
+        "bet_scale": 1.2,
+        "bluff_fold": 0.55,
+        "bluff_mode": "measured",
+        "call_shift": -0.02,
+        "min_obs": 10,
+        "model_obs": 8,
+        "open_shift": 0.0,
+        "raise_eq": 0.75,
+        "three_bet_scale": 1.2,
+        "value_shift": -0.03
+      },
+      "id": "v-7175bd690aa6"
+    },
+    {
+      "config": {
+        "bet_scale": 1.2,
+        "bluff_fold": 0.6,
+        "bluff_mode": "measured",
+        "call_shift": 0.02,
+        "min_obs": 10,
+        "model_obs": 12,
+        "open_shift": -0.15,
+        "raise_eq": 0.7,
+        "three_bet_scale": 1.0,
+        "value_shift": 0.015
+      },
+      "id": "v-e4b3759ccbca"
+    },
+    {
+      "config": {
+        "bet_scale": 1.2,
+        "bluff_fold": 0.6,
+        "bluff_mode": "single",
+        "call_shift": 0.0,
+        "min_obs": 25,
+        "model_obs": 8,
+        "open_shift": 0.0,
+        "raise_eq": 0.7,
+        "three_bet_scale": 1.2,
+        "value_shift": -0.03
+      },
+      "id": "v-e65549e36908"
+    },
+    {
+      "config": {
+        "bet_scale": 0.8,
+        "bluff_fold": 0.65,
+        "bluff_mode": "off",
+        "call_shift": 0.01,
+        "min_obs": 25,
+        "model_obs": 30,
+        "open_shift": 0.15,
+        "raise_eq": 0.7,
+        "three_bet_scale": 1.0,
+        "value_shift": -0.03
+      },
+      "id": "v-860f939068c7"
+    },
+    {
+      "config": {
+        "bet_scale": 0.8,
+        "bluff_fold": 0.6,
+        "bluff_mode": "measured",
+        "call_shift": 0.0,
+        "min_obs": 10,
+        "model_obs": 20,
+        "open_shift": 0.15,
+        "raise_eq": 0.8,
+        "three_bet_scale": 1.0,
+        "value_shift": 0.015
+      },
+      "id": "v-0ad5218e0a12"
+    },
+    {
+      "config": {
+        "bet_scale": 1.0,
+        "bluff_fold": 0.6,
+        "bluff_mode": "original",
+        "call_shift": 0.0,
+        "min_obs": 15,
+        "model_obs": 30,
+        "open_shift": 0.0,
+        "raise_eq": 0.8,
+        "three_bet_scale": 1.0,
+        "value_shift": 0.0
+      },
+      "id": "v-b32cb9d7b29f"
+    },
+    {
+      "config": {
+        "bet_scale": 0.8,
+        "bluff_fold": 0.6,
+        "bluff_mode": "single",
+        "call_shift": -0.01,
+        "min_obs": 10,
+        "model_obs": 12,
+        "open_shift": -0.15,
+        "raise_eq": 0.7,
+        "three_bet_scale": 1.2,
+        "value_shift": 0.0
+      },
+      "id": "v-7028f8aa1a9e"
+    },
+    {
+      "config": {
+        "bet_scale": 0.8,
+        "bluff_fold": 0.65,
+        "bluff_mode": "original",
+        "call_shift": 0.0,
+        "min_obs": 10,
+        "model_obs": 30,
+        "open_shift": 0.15,
+        "raise_eq": 0.7,
+        "three_bet_scale": 0.8,
+        "value_shift": 0.0
+      },
+      "id": "v-dca8da935635"
+    },
+    {
+      "config": {
+        "bet_scale": 1.2,
+        "bluff_fold": 0.55,
+        "bluff_mode": "original",
+        "call_shift": 0.02,
+        "min_obs": 10,
+        "model_obs": 8,
+        "open_shift": 0.0,
+        "raise_eq": 0.8,
+        "three_bet_scale": 0.8,
+        "value_shift": -0.015
+      },
+      "id": "v-978730ce9ffa"
+    },
+    {
+      "config": {
+        "bet_scale": 1.2,
+        "bluff_fold": 0.55,
+        "bluff_mode": "measured",
+        "call_shift": 0.01,
+        "min_obs": 40,
+        "model_obs": 12,
+        "open_shift": 0.0,
+        "raise_eq": 0.8,
+        "three_bet_scale": 1.0,
+        "value_shift": -0.015
+      },
+      "id": "v-77c2c13b242e"
+    },
+    {
+      "config": {
+        "bet_scale": 1.0,
+        "bluff_fold": 0.55,
+        "bluff_mode": "single",
+        "call_shift": -0.02,
+        "min_obs": 40,
+        "model_obs": 20,
+        "open_shift": 0.15,
+        "raise_eq": 0.7,
+        "three_bet_scale": 1.2,
+        "value_shift": 0.0
+      },
+      "id": "v-841f77346b2f"
+    },
+    {
+      "config": {
+        "bet_scale": 1.2,
+        "bluff_fold": 0.55,
+        "bluff_mode": "off",
+        "call_shift": 0.01,
+        "min_obs": 40,
+        "model_obs": 20,
+        "open_shift": 0.15,
+        "raise_eq": 0.7,
+        "three_bet_scale": 0.8,
+        "value_shift": 0.0
+      },
+      "id": "v-c6e644725748"
+    },
+    {
+      "config": {
+        "bet_scale": 1.0,
+        "bluff_fold": 0.6,
+        "bluff_mode": "original",
+        "call_shift": 0.02,
+        "min_obs": 15,
+        "model_obs": 20,
+        "open_shift": 0.0,
+        "raise_eq": 0.75,
+        "three_bet_scale": 0.8,
+        "value_shift": -0.015
+      },
+      "id": "v-252f3b5906f7"
+    },
+    {
+      "config": {
+        "bet_scale": 1.2,
+        "bluff_fold": 0.55,
+        "bluff_mode": "off",
+        "call_shift": -0.01,
+        "min_obs": 15,
+        "model_obs": 8,
+        "open_shift": -0.15,
+        "raise_eq": 0.75,
+        "three_bet_scale": 1.0,
+        "value_shift": 0.0
+      },
+      "id": "v-256fcb0ed9f4"
+    },
+    {
+      "config": {
+        "bet_scale": 1.0,
+        "bluff_fold": 0.6,
+        "bluff_mode": "off",
+        "call_shift": -0.02,
+        "min_obs": 40,
+        "model_obs": 12,
+        "open_shift": -0.15,
+        "raise_eq": 0.8,
+        "three_bet_scale": 1.0,
+        "value_shift": 0.03
+      },
+      "id": "v-0a4ce28223af"
+    },
+    {
+      "config": {
+        "bet_scale": 1.2,
+        "bluff_fold": 0.65,
+        "bluff_mode": "single",
+        "call_shift": 0.0,
+        "min_obs": 40,
+        "model_obs": 12,
+        "open_shift": -0.15,
+        "raise_eq": 0.8,
+        "three_bet_scale": 0.8,
+        "value_shift": 0.03
+      },
+      "id": "v-e65d303d1979"
+    },
+    {
+      "config": {
+        "bet_scale": 0.8,
+        "bluff_fold": 0.65,
+        "bluff_mode": "measured",
+        "call_shift": 0.01,
+        "min_obs": 25,
+        "model_obs": 8,
+        "open_shift": -0.15,
+        "raise_eq": 0.7,
+        "three_bet_scale": 0.8,
+        "value_shift": 0.015
+      },
+      "id": "v-c1dd7d79ba2c"
+    }
+  ],
+  "deals": 200,
+  "fields": {
+    "search": {
+      "equity": [
+        {
+          "cpu_cost": 2,
+          "family": "equity",
+          "id": "search-equity-0",
+          "kind": "equity",
+          "params": {
+            "margin": 0.03
+          }
+        },
+        {
+          "cpu_cost": 2,
+          "family": "equity",
+          "id": "search-equity-1",
+          "kind": "equity",
+          "params": {
+            "margin": 0.08
+          }
+        }
+      ],
+      "maniac": [
+        {
+          "cpu_cost": 1,
+          "family": "maniac",
+          "id": "search-maniac-0",
+          "kind": "maniac",
+          "params": {
+            "aggression": 0.65
+          }
+        },
+        {
+          "cpu_cost": 1,
+          "family": "maniac",
+          "id": "search-maniac-1",
+          "kind": "maniac",
+          "params": {
+            "aggression": 0.85
+          }
+        }
+      ],
+      "minraise": [
+        {
+          "cpu_cost": 1,
+          "family": "minraise",
+          "id": "search-minraise-0",
+          "kind": "minraise",
+          "params": {
+            "aggression": 0.7
+          }
+        },
+        {
+          "cpu_cost": 1,
+          "family": "minraise",
+          "id": "search-minraise-1",
+          "kind": "minraise",
+          "params": {
+            "aggression": 1.0
+          }
+        }
+      ],
+      "nit": [
+        {
+          "cpu_cost": 1,
+          "family": "nit",
+          "id": "search-nit-0",
+          "kind": "nit",
+          "params": {
+            "threshold": 0.68
+          }
+        },
+        {
+          "cpu_cost": 1,
+          "family": "nit",
+          "id": "search-nit-1",
+          "kind": "nit",
+          "params": {
+            "threshold": 0.74
+          }
+        }
+      ],
+      "shove": [
+        {
+          "cpu_cost": 1,
+          "family": "shove",
+          "id": "search-shove-0",
+          "kind": "shove",
+          "params": {
+            "threshold": 0.0
+          }
+        },
+        {
+          "cpu_cost": 1,
+          "family": "shove",
+          "id": "search-shove-1",
+          "kind": "shove",
+          "params": {
+            "threshold": 0.55
+          }
+        }
+      ],
+      "starter": [
+        {
+          "cpu_cost": 1,
+          "family": "starter",
+          "id": "search-starter-0",
+          "kind": "official",
+          "params": {}
+        },
+        {
+          "cpu_cost": 1,
+          "family": "starter",
+          "id": "search-starter-1",
+          "kind": "starter",
+          "params": {
+            "margin": 0.08
+          }
+        }
+      ],
+      "station": [
+        {
+          "cpu_cost": 1,
+          "family": "station",
+          "id": "search-station-0",
+          "kind": "station",
+          "params": {
+            "looseness": 1.0
+          }
+        },
+        {
+          "cpu_cost": 1,
+          "family": "station",
+          "id": "search-station-1",
+          "kind": "station",
+          "params": {
+            "looseness": 0.85
+          }
+        }
+      ],
+      "threebet": [
+        {
+          "cpu_cost": 1,
+          "family": "threebet",
+          "id": "search-threebet-0",
+          "kind": "threebet",
+          "params": {
+            "aggression": 0.5
+          }
+        },
+        {
+          "cpu_cost": 1,
+          "family": "threebet",
+          "id": "search-threebet-1",
+          "kind": "threebet",
+          "params": {
+            "aggression": 0.8
+          }
+        }
+      ]
+    },
+    "test": {
+      "combined_reference": [
+        {
+          "cpu_cost": 2,
+          "family": "combined_reference",
+          "id": "test-combined_reference-0",
+          "kind": "combined_reference",
+          "params": {}
+        }
+      ],
+      "delayed_bluff": [
+        {
+          "cpu_cost": 1,
+          "family": "delayed_bluff",
+          "id": "test-delayed_bluff-0",
+          "kind": "delayed",
+          "params": {
+            "aggression": 0.55
+          }
+        }
+      ],
+      "equity": [
+        {
+          "cpu_cost": 2,
+          "family": "equity",
+          "id": "test-equity-0",
+          "kind": "equity",
+          "params": {
+            "margin": 0.05,
+            "size": 0.45
+          }
+        }
+      ],
+      "main_reference": [
+        {
+          "cpu_cost": 2,
+          "family": "main_reference",
+          "id": "test-main_reference-0",
+          "kind": "main_reference",
+          "params": {}
+        }
+      ],
+      "maniac": [
+        {
+          "cpu_cost": 1,
+          "family": "maniac",
+          "id": "test-maniac-0",
+          "kind": "maniac",
+          "params": {
+            "aggression": 0.75,
+            "size": 1.3
+          }
+        }
+      ],
+      "minraise": [
+        {
+          "cpu_cost": 1,
+          "family": "minraise",
+          "id": "test-minraise-0",
+          "kind": "minraise",
+          "params": {
+            "aggression": 0.85
+          }
+        }
+      ],
+      "nit": [
+        {
+          "cpu_cost": 1,
+          "family": "nit",
+          "id": "test-nit-0",
+          "kind": "nit",
+          "params": {
+            "size": 0.45,
+            "threshold": 0.71
+          }
+        }
+      ],
+      "postflop_jammer": [
+        {
+          "cpu_cost": 1,
+          "family": "postflop_jammer",
+          "id": "test-postflop_jammer-0",
+          "kind": "postjam",
+          "params": {
+            "threshold": 0.48
+          }
+        }
+      ],
+      "shove": [
+        {
+          "cpu_cost": 1,
+          "family": "shove",
+          "id": "test-shove-0",
+          "kind": "shove",
+          "params": {
+            "threshold": 0.45
+          }
+        }
+      ],
+      "starter": [
+        {
+          "cpu_cost": 1,
+          "family": "starter",
+          "id": "test-starter-0",
+          "kind": "starter",
+          "params": {
+            "margin": 0.14,
+            "size": 0.9
+          }
+        }
+      ],
+      "station": [
+        {
+          "cpu_cost": 1,
+          "family": "station",
+          "id": "test-station-0",
+          "kind": "station",
+          "params": {
+            "looseness": 0.82,
+            "size": 0.45
+          }
+        }
+      ],
+      "switcher": [
+        {
+          "cpu_cost": 1,
+          "family": "switcher",
+          "id": "test-switcher-0",
+          "kind": "switch",
+          "params": {
+            "aggression": 0.5
+          }
+        }
+      ],
+      "threebet": [
+        {
+          "cpu_cost": 1,
+          "family": "threebet",
+          "id": "test-threebet-0",
+          "kind": "threebet",
+          "params": {
+            "aggression": 0.65,
+            "size": 0.9
+          }
+        }
+      ],
+      "trapper": [
+        {
+          "cpu_cost": 1,
+          "family": "trapper",
+          "id": "test-trapper-0",
+          "kind": "trap",
+          "params": {
+            "aggression": 0.25
+          }
+        }
+      ]
+    },
+    "validation": {
+      "equity": [
+        {
+          "cpu_cost": 2,
+          "family": "equity",
+          "id": "validation-equity-0",
+          "kind": "equity",
+          "params": {
+            "margin": 0.05,
+            "size": 0.45
+          }
+        }
+      ],
+      "maniac": [
+        {
+          "cpu_cost": 1,
+          "family": "maniac",
+          "id": "validation-maniac-0",
+          "kind": "maniac",
+          "params": {
+            "aggression": 0.75,
+            "size": 1.3
+          }
+        }
+      ],
+      "minraise": [
+        {
+          "cpu_cost": 1,
+          "family": "minraise",
+          "id": "validation-minraise-0",
+          "kind": "minraise",
+          "params": {
+            "aggression": 0.85
+          }
+        }
+      ],
+      "nit": [
+        {
+          "cpu_cost": 1,
+          "family": "nit",
+          "id": "validation-nit-0",
+          "kind": "nit",
+          "params": {
+            "size": 0.45,
+            "threshold": 0.71
+          }
+        }
+      ],
+      "shove": [
+        {
+          "cpu_cost": 1,
+          "family": "shove",
+          "id": "validation-shove-0",
+          "kind": "shove",
+          "params": {
+            "threshold": 0.45
+          }
+        }
+      ],
+      "starter": [
+        {
+          "cpu_cost": 1,
+          "family": "starter",
+          "id": "validation-starter-0",
+          "kind": "starter",
+          "params": {
+            "margin": 0.14,
+            "size": 0.9
+          }
+        }
+      ],
+      "station": [
+        {
+          "cpu_cost": 1,
+          "family": "station",
+          "id": "validation-station-0",
+          "kind": "station",
+          "params": {
+            "looseness": 0.82,
+            "size": 0.45
+          }
+        }
+      ],
+      "threebet": [
+        {
+          "cpu_cost": 1,
+          "family": "threebet",
+          "id": "validation-threebet-0",
+          "kind": "threebet",
+          "params": {
+            "aggression": 0.65,
+            "size": 0.9
+          }
+        }
+      ]
+    }
+  },
+  "hours": 8,
+  "max_family_regression": 0.1,
+  "message": "PREPARED ONLY. No games or tuning have run. Explicit run command required.",
+  "min_test_blocks": 30,
+  "min_validation_blocks": 30,
+  "phase_fractions": {
+    "finalize": 0.005,
+    "preflight": 0.025,
+    "search": 0.475,
+    "test": 0.295,
+    "validation": 0.2
+  },
+  "plan_hash": "e1b0fee3cbb851be07733cd0c8a8b42cce2dd6c8496ed08b0bff3f76299a9808",
+  "practical_delta": 0.005,
+  "preflop_sha": null,
+  "prepared_utc": "2026-11-07T02:14:03.580161+00:00",
+  "repo_sha": "c559880ae9ba74de425574778040e114fdec68a6",
+  "rules": {
+    "big_blind": 20,
+    "max_faults": 20,
+    "max_pickle_bytes": 26214400,
+    "move_timeout": 1.0,
+    "python": [
+      3,
+      14
+    ],
+    "small_blind": 10,
+    "stack": 2000,
+    "think_budget_per_deal": 0.2
+  },
+  "rules_hash": "e4e5e2fb1c50f68ae7caf9c586e47a38cab4ffa6822d992dd4654e5c0b50ae15",
+  "rules_source": "https://poker-arena-site.vercel.app/data/submitting.md",
+  "schema": 1,
+  "seed": 20261107,
+  "source_hash": "4f5177e0cf41d96b80270d1fb8b4a3d4a230c187653478d172a282f2da771eb4"
+}
