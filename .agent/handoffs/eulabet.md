@@ -2,13 +2,14 @@
 
 <!-- Only you edit your file. Overwrite (don't append) at each checkpoint. Format: .agent/RECOVERY.md -->
 
-Updated: 2026-11-07T01:01:18+00:00
-Status: waiting
-Task: Night break. PR #42 (research rules + #35) awaits lembzg contract approval; overnight runs by partner.
+Updated: 2026-11-07T08:13:26+00:00
+Status: idle
+Task: none open (all EulaBet tickets closed); lembzg owns final candidate #44/#45
 Branch: eulabet/overnight
 Commit: e26c1d8
 
 ## Done
+- #42 merged (research rules, #40/#35 closed). #48 merged (#47: incremental evaluator, equity 31-52% faster; fixes #45 CI benchmark without changing threshold — lembzg asked to rebase #45 and confirm).
 - Merged: #15 equity, #18 harness, #23 gauntlet, #25/#28 EV tool, #20 postflop, #21 MainBot, #30 pure-Python runtime, #31 arena adapter, #38 arena gauntlet. #19 opponent model merged by lembzg.
 - PR #42 (#40 research rules + #35 hidden SB folds): CI green, needs lembzg approval (contract label, additive API.md).
 - PR #34 combined prototype (lembzg added --strategy combo build).
