@@ -16,7 +16,9 @@ PRIOR_HANDS = 8.0
 # Arena BB half: the opponent's SB folds are hidden, so visible jams / visible decisions overstates their open-jam
 # share by 1 / (SB entry rate). Scale by an assumed entry rate instead of discarding the evidence: discarding it
 # kept a 10% jam range all half even vs a bot that shoved every hand (-3.7 bb/hand vs @shove, #45 review).
-HIDDEN_SB_ENTRY = 0.45
+# 0.80 chosen over 0.45 / 0.60 by organisers'-engine A/B (4 seeds): vs @shove +0.9..+1.1 bb/hand, vs a top-10%
+# jammer -0.1, full 16-opponent pool +0.08 mean, 0 faults.
+HIDDEN_SB_ENTRY = 0.80
 DEEP_PRIORS = (0.10, 0.06, 0.03)
 SHALLOW_PRIORS = (0.50, 0.35, 0.20)
 

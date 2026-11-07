@@ -147,7 +147,7 @@ def test_partial_arena_data_scales_sb_jam_frequency_instead_of_ignoring_it():
     for _ in range(100):
         m.observe(s)
         m.finish_hand()
-    assert .35 < m.share(s) < .5
+    assert .6 < m.share(s) < .85
 
 
 def test_v0_learns_blinds_before_nonterminal_observations():
@@ -184,7 +184,7 @@ def test_hidden_sb_folds_scale_but_keep_open_jam_evidence():
         m.finish_hand()
         m.observe(s)
     expected = (50 * HIDDEN_SB_ENTRY + 8 * .10) / (50 + 8)
-    assert m.share(s) == pytest.approx(expected) and m.share(s) > .35
+    assert m.share(s) == pytest.approx(expected) and m.share(s) > .6
     full = JamModel()
     for _ in range(50):
         full.finish_hand()
