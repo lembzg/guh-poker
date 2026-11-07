@@ -118,6 +118,20 @@ def to_response(action: Action, gs, state: GameState, response_cls):
     return response_cls.call()            # call, or check when nothing is owed
 
 
+def from_response(resp, gs, state: GameState) -> Action:
+    """Their Response (street totals) -> our Action (hand totals), for decisions made by another module."""
+    kind = getattr(resp, "action_type", None)
+    call = int(gs.call_amount or 0)
+    if kind == "fold":
+        return Action("fold") if call > 0 else Action("check")
+    if kind in ("raise", "all_in") and state.legal.max_raise_to is not None:
+        if kind == "all_in" or getattr(resp, "amount", None) is None:
+            return Action("raise", state.legal.max_raise_to)
+        prior_me = state.my_committed - int(gs.current_bets[gs.my_index])
+        return Action("raise", prior_me + int(resp.amount))
+    return Action("call") if call > 0 else Action("check")
+
+
 def safe_response(gs, response_cls):
     return response_cls.call() if int(getattr(gs, "call_amount", 0) or 0) == 0 else response_cls.fold()
 
@@ -149,6 +163,16 @@ class ArenaAdapter:
         except Exception:
             self.errors += 1
             return safe_response(gs, self.response_cls)
+
+    def observe(self, gs, response) -> None:
+        """Record a decision another module made (e.g. a separate preflop strategy), so hand tracking and
+        the wrapped bot's opponent model still see the whole hand."""
+        try:
+            self._track_hand(gs)
+            state = to_game_state(gs, self.hand_id)
+            self._last_state, self._last_action = state, from_response(response, gs, state)
+        except Exception:
+            self.errors += 1
 
     # ------------------------------------------------------------- hand tracking
 
