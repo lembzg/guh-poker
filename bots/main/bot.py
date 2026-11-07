@@ -16,6 +16,8 @@ import time
 from collections import Counter
 
 from bots.main.fallback import fallback_action
+from bots.main.allin import JamModel, all_in_call_action
+from core.allin import terminal_call
 from core.interface import Action, GameState, HandResult, OpponentStats, clamp_to_legal
 
 log = logging.getLogger("bots.main")
@@ -89,6 +91,7 @@ class MainBot:
         self.think_s = 0.0                    # total time spent in act() this match
         self.hands_seen: set = set()
         self.model = None
+        self.jam_model = JamModel()
         self._new_model()
 
     def _new_model(self) -> None:
@@ -105,9 +108,19 @@ class MainBot:
         self.fallbacks.clear()
         self.think_s = 0.0
         self.hands_seen = set()
+        self.jam_model = JamModel()
         self._new_model()
 
+    def set_partial_observations(self) -> None:
+        """Arena lacks hands where the SB folds before we act."""
+        self.jam_model.complete_hands = False
+
+    def observe_state(self, state: GameState) -> None:
+        """Also learn observed preflop decisions when a combined strategy acts externally."""
+        self.jam_model.observe(state)
+
     def hand_over(self, result: HandResult) -> None:
+        self.jam_model.finish_hand(result)
         if self.model is not None:
             try:
                 self.model.observe_hand(result)
@@ -124,6 +137,7 @@ class MainBot:
 
     def _act(self, state: GameState, start: float) -> Action:
         try:
+            self.observe_state(state)
             self.hands_seen.add(state.hand_id)
             if self.think_s > BANK_PER_HAND_S * len(self.hands_seen) + BANK_SLACK_S:
                 self.fallbacks["bank"] += 1           # running hot: protect the thinking bank
@@ -157,6 +171,9 @@ class MainBot:
 
     def _strategy_for(self, state: GameState, budget_ms: float):
         if state.street == 1:
+            if terminal_call(state):
+                rng = self.jam_model.range(state)
+                return lambda: all_in_call_action(state, rng, budget_ms * POSTFLOP_SHARE)
             if _preflop is None:
                 return None
             stats = self._stats()

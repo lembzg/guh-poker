@@ -77,3 +77,23 @@ long-match results do not establish a tournament-length improvement. Compare var
 duplicate deals across independent short matches, and confirm selected parameters on fresh seeds.
 
 ## Open questions
+
+## All-in accounting (#39)
+
+`opp_starting_stack` now carries opponent remaining chips plus their hand-total
+commitment, separately from our `starting_stack`. Terminal calls exclude unmatched
+excess. A covering raise is terminal even when we retain chips, so no opponent
+fold is inferred from missing subsequent turns. Arena observation is partial:
+SB folds before our first decision remain invisible; the all-in learner keeps
+its open-jam prior in that context rather than learning from selected raises.
+The combined candidate sends terminal preflop calls through MainBot's guarded
+equity path. Research, formulas, prior choices and limitations: [ALL_IN.md](ALL_IN.md).
+
+Verification of implementation `b2fef33` on organisers `8b89346`, Python 3.14
+without numpy/eval7: standalone and combo sources each validate for 40 hands
+with zero faults; both packages pass fresh-process validation (300KB/536KB).
+Unpacked payloads against @shove, 200 duplicate deals each: main seed 404,
++0.310 bb/hand (95% CI -3.799..+4.419), 7.7s aggregate thinking; combo seed 505,
++4.034 bb/hand (95% CI +0.311..+7.756), 6.2s thinking. Both have zero faults.
+These smoke runs verify packed legality and terminal routing; they are not
+before/after improvement estimates. Combo helpers are from #32 at c457065a.

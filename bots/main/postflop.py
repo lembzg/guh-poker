@@ -17,6 +17,7 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
+from core.allin import call_price, effective_raise_to, opponent_start, terminal_call
 from core.equity import RANKS, Range, equity, top_percent_range
 from core.interface import Action, GameState, OpponentStats
 
@@ -118,10 +119,11 @@ def _bet(state: GameState, frac: float) -> Action:
     lg = state.legal
     if lg.min_raise_to is None:
         return Action("check") if lg.can_check else Action("call")
+    high = effective_raise_to(state)
     target = _raise_to(state, frac)
-    if target >= 0.8 * lg.max_raise_to:      # don't leave a sliver behind
-        target = lg.max_raise_to
-    return Action("raise", max(lg.min_raise_to, min(target, lg.max_raise_to)))
+    if target - state.my_committed >= 0.8 * (high - state.my_committed):      # don't leave a sliver behind
+        target = high
+    return Action("raise", max(lg.min_raise_to, min(target, high)))
 
 
 def _value_size(eq: float, wet: bool, k: Knobs, spr: float) -> float:
@@ -156,7 +158,7 @@ def postflop_action(state: GameState, opp: OpponentStats | None, opp_range: Rang
 
     pot = state.my_committed + state.opp_committed
     my_behind = state.starting_stack - state.my_committed
-    opp_behind = state.starting_stack - state.opp_committed
+    opp_behind = opponent_start(state) - state.opp_committed
     spr = min(my_behind, opp_behind) / max(1, pot)
     wet = is_wet(state.board)
     draw = has_draw(state.hole_cards, state.board)
@@ -170,6 +172,9 @@ def _facing_bet(state, eq, k, street, spr, wet, draw, rng_mix) -> Action:
     lg = state.legal
     call = lg.call_amount
     pot = state.my_committed + state.opp_committed
+    if terminal_call(state):
+        cost, final_pot = call_price(state)
+        return Action("call" if eq * final_pot >= cost else "fold")
     pot_odds = call / (pot + call)
     need = pot_odds + CALL_MARGIN[street]
     if draw and street < 4:
@@ -220,8 +225,10 @@ def _checked_to(state, eq, k, street, spr, wet, draw, rng_mix) -> Action:
     ev_check = eq * pot
     best, best_ev = None, ev_check
     for frac in (0.33, 0.5, 0.75):
-        b = frac * pot
-        f = min(0.95, fold_p * (0.85 + 0.3 * frac))   # bigger bets fold out a little more
+        action = _bet(state, frac)
+        b = min(action.raise_to, opponent_start(state)) - state.my_committed
+        actual_frac = b / max(1, pot)
+        f = min(0.95, fold_p * (0.85 + 0.3 * actual_frac))   # bigger bets fold out a little more
         eq_called = eq * 0.85                 # they call with their better hands
         ev = f * pot + (1 - f) * (eq_called * (pot + 2 * b) - b)
         if ev > best_ev * 1.05 + 0.01 * pot:

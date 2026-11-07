@@ -7,6 +7,7 @@ MainBot uses it whenever a strategy module is missing, raises, or runs over its 
 """
 from __future__ import annotations
 
+from core.allin import unbeatable
 from core.equity import _preflop_ranking, rank7
 from core.interface import Action, GameState, clamp_to_legal
 
@@ -73,4 +74,6 @@ def _decide(state: GameState) -> Action:
     if category >= 2 and lg.min_raise_to is not None:
         return _small_raise(state)
     pot_before_bet = state.my_committed + state.opp_committed - call
-    return Action("call") if call <= pot_before_bet else Action("fold")
+    if call <= pot_before_bet or unbeatable(state.hole_cards, state.board, value):
+        return Action("call")
+    return Action("fold")

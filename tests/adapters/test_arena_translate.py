@@ -194,3 +194,23 @@ def test_observed_preflop_raise_followed_by_new_hand_infers_fold():
         ActionRecord(1, "me", "raise", 60), ActionRecord(1, "opp", "fold", None),
     )
     assert ad.errors == 0
+
+
+def test_actual_opponent_stack_and_covering_bet_do_not_invent_fold():
+    from dataclasses import replace
+    gs = replace(preflop_button(), stack_sizes=(1990, 40))
+    bot = Recorder([Action('raise', 60)])
+    ad = ArenaAdapter(bot, Resp)
+    ad.act(gs)
+    assert bot.states[0].opp_starting_stack == 60
+    ad._finish_hand()
+    assert bot.results[0].history == (ActionRecord(1, 'me', 'raise', 60),)
+
+
+def test_external_decisions_update_optional_state_observer():
+    bot = Recorder([])
+    seen = []
+    bot.observe_state = seen.append
+    ad = ArenaAdapter(bot, Resp)
+    ad.observe(preflop_button(), SimpleNamespace(action_type='call', amount=None))
+    assert len(seen) == 1 and seen[0].opp_starting_stack == 2000

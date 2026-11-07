@@ -28,7 +28,10 @@ class ComboBot(PokerBot):
                 self.rng.seed(os.urandom(16))
                 self._started = True
             self.model.observe(gs)
-            if gs.is_preflop:
+            terminal = gs.call_amount > 0 and (
+                gs.call_amount >= gs.stack_sizes[gs.my_index]
+                or gs.stack_sizes[1 - gs.my_index] == 0)
+            if gs.is_preflop and not terminal:
                 resp = self._legal(preflop_action(gs, self.model, self.rng), gs)
             else:
                 resp = self._post.act(gs)

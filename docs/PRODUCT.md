@@ -30,3 +30,62 @@ _One line per measured run, newest at the bottom. Every row must come from the h
 
 | Date | Bot (commit) | Opponent | Hands | bb/100 ± 95% CI | ms/decision avg / max | Notes |
 |---|---|---|---|---|---|---|
+
+### All-in correction evidence (#39)
+
+Research and policy assumptions: [ALL_IN.md](ALL_IN.md). Baseline is the unchanged
+`d83bd2b` snapshot (same code as `9a9575a` plus the optional unused stack field);
+candidate is the implementation committed as `b2fef33` on
+`lembzg/39-allin-logic`, measured with the same source immediately before commit.
+The baseline archive reports `nogit`; provenance is recorded here explicitly.
+Both use the full development Python 3.12 environment (including v0's existing
+eval7). Each run uses 400 hands = 200 duplicate deals, 100bb, seeds 101/202/303,
+fresh bot instances and identical decks between variants.
+
+The rows below are direct `harness.match.play_match` outputs; all have zero
+illegal actions and errors for both seats. Baseline and final candidate each
+played 7,200 hands. They are comparisons on a small fixed opponent suite, not
+proof of universal improvement. Individual CIs describe each bot's win rate,
+not a confidence interval for the before/after difference. The suite does not
+validate the partial-observation arena learner's adaptation; that is separately
+tested for bias handling and legality. Earlier candidate measurements from before
+the known-fold learner correction were rejected and are not included.
+
+| Date | Bot / variant | Opponent | Hands | bb/100 ± 95% CI | ms/decision avg / max | Notes |
+|---|---|---|---|---|---|---|
+| 2026-11-07 | main / baseline | always_jam | 400 | 351.25 ± 332.52 | 0.002 / 0.04 | duplicate; seed 101 |
+| 2026-11-07 | main / baseline | always_jam | 400 | 726.62 ± 337.64 | 0.002 / 0.02 | duplicate; seed 202 |
+| 2026-11-07 | main / baseline | always_jam | 400 | 27.38 ± 332.95 | 0.002 / 0.02 | duplicate; seed 303 |
+| 2026-11-07 | main / baseline | jam_top | 400 | 27.00 ± 5.21 | 2.617 / 29.51 | duplicate; seed 101 |
+| 2026-11-07 | main / baseline | jam_top | 400 | 27.50 ± 69.83 | 2.530 / 12.47 | duplicate; seed 202 |
+| 2026-11-07 | main / baseline | jam_top | 400 | -0.38 ± 49.01 | 2.284 / 11.80 | duplicate; seed 303 |
+| 2026-11-07 | main / baseline | random | 400 | 231.12 ± 204.18 | 4.030 / 17.00 | duplicate; seed 101 |
+| 2026-11-07 | main / baseline | random | 400 | 635.75 ± 276.75 | 3.848 / 39.13 | duplicate; seed 202 |
+| 2026-11-07 | main / baseline | random | 400 | 279.62 ± 204.53 | 3.356 / 13.43 | duplicate; seed 303 |
+| 2026-11-07 | main / baseline | always_call | 400 | 516.88 ± 136.60 | 6.492 / 24.30 | duplicate; seed 101 |
+| 2026-11-07 | main / baseline | always_call | 400 | 653.75 ± 163.43 | 6.542 / 38.65 | duplicate; seed 202 |
+| 2026-11-07 | main / baseline | always_call | 400 | 480.75 ± 137.62 | 6.362 / 55.76 | duplicate; seed 303 |
+| 2026-11-07 | v0 / baseline | always_jam | 400 | 423.12 ± 414.90 | 0.026 / 0.06 | duplicate; seed 101 |
+| 2026-11-07 | v0 / baseline | always_jam | 400 | 428.50 ± 453.96 | 0.025 / 0.05 | duplicate; seed 202 |
+| 2026-11-07 | v0 / baseline | always_jam | 400 | 431.12 ± 396.16 | 0.025 / 0.18 | duplicate; seed 303 |
+| 2026-11-07 | v0 / baseline | jam_top | 400 | -75.88 ± 119.26 | 0.025 / 0.03 | duplicate; seed 101 |
+| 2026-11-07 | v0 / baseline | jam_top | 400 | -75.12 ± 119.96 | 0.027 / 0.19 | duplicate; seed 202 |
+| 2026-11-07 | v0 / baseline | jam_top | 400 | -30.25 ± 137.46 | 0.026 / 0.18 | duplicate; seed 303 |
+| 2026-11-07 | main / candidate | always_jam | 400 | 477.25 ± 483.69 | 16.229 / 127.32 | duplicate; seed 101 |
+| 2026-11-07 | main / candidate | always_jam | 400 | 928.63 ± 464.56 | 14.401 / 114.24 | duplicate; seed 202 |
+| 2026-11-07 | main / candidate | always_jam | 400 | 499.88 ± 454.72 | 13.826 / 71.32 | duplicate; seed 303 |
+| 2026-11-07 | main / candidate | jam_top | 400 | 27.00 ± 5.21 | 4.842 / 41.87 | duplicate; seed 101 |
+| 2026-11-07 | main / candidate | jam_top | 400 | 1.25 ± 50.51 | 4.791 / 65.00 | duplicate; seed 202 |
+| 2026-11-07 | main / candidate | jam_top | 400 | 98.12 ± 82.77 | 4.347 / 26.53 | duplicate; seed 303 |
+| 2026-11-07 | main / candidate | random | 400 | 268.62 ± 213.51 | 8.381 / 154.30 | duplicate; seed 101 |
+| 2026-11-07 | main / candidate | random | 400 | 635.75 ± 276.75 | 3.946 / 35.13 | duplicate; seed 202 |
+| 2026-11-07 | main / candidate | random | 400 | 279.62 ± 204.53 | 3.401 / 20.16 | duplicate; seed 303 |
+| 2026-11-07 | main / candidate | always_call | 400 | 516.88 ± 136.60 | 6.869 / 108.30 | duplicate; seed 101 |
+| 2026-11-07 | main / candidate | always_call | 400 | 639.88 ± 157.06 | 6.944 / 93.31 | duplicate; seed 202 |
+| 2026-11-07 | main / candidate | always_call | 400 | 476.13 ± 136.85 | 9.097 / 133.57 | duplicate; seed 303 |
+| 2026-11-07 | v0 / candidate | always_jam | 400 | 346.25 ± 488.32 | 13.910 / 51.39 | duplicate; seed 101 |
+| 2026-11-07 | v0 / candidate | always_jam | 400 | 872.00 ± 482.14 | 12.820 / 32.42 | duplicate; seed 202 |
+| 2026-11-07 | v0 / candidate | always_jam | 400 | 418.75 ± 453.71 | 13.244 / 63.77 | duplicate; seed 303 |
+| 2026-11-07 | v0 / candidate | jam_top | 400 | 24.38 ± 5.83 | 2.728 / 25.87 | duplicate; seed 101 |
+| 2026-11-07 | v0 / candidate | jam_top | 400 | -1.38 ± 50.76 | 2.751 / 23.75 | duplicate; seed 202 |
+| 2026-11-07 | v0 / candidate | jam_top | 400 | 93.00 ± 82.61 | 2.771 / 53.83 | duplicate; seed 303 |

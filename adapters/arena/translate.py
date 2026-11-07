@@ -17,6 +17,7 @@ No imports from `player_sdk` here: the `Response` class is passed in, so this fi
 """
 from __future__ import annotations
 
+from core.allin import opponent_start
 from core.interface import Action, ActionRecord, GameState, HandResult, LegalActions, clamp_to_legal
 
 STREETS = {"preflop": 1, "flop": 2, "turn": 3, "river": 4}
@@ -92,6 +93,7 @@ def to_game_state(gs, hand_id: int) -> GameState:
         small_blind=int(gs.small_blind or 10),
         big_blind=int(gs.big_blind or 20),
         starting_stack=my_stack + my_committed,
+        opp_starting_stack=int(gs.stack_sizes[opp]) + opp_committed,
         my_committed=my_committed,
         opp_committed=opp_committed,
         history=tuple(records),
@@ -150,6 +152,9 @@ class ArenaAdapter:
         self.errors = 0
         try:
             bot.new_match("arena", opponent)
+            partial = getattr(bot, "set_partial_observations", None)
+            if partial is not None:
+                partial()
         except Exception:
             self.errors += 1
 
@@ -170,6 +175,9 @@ class ArenaAdapter:
         try:
             self._track_hand(gs)
             state = to_game_state(gs, self.hand_id)
+            observer = getattr(self.bot, "observe_state", None)
+            if observer is not None:
+                observer(state)
             self._last_state, self._last_action = state, from_response(response, gs, state)
         except Exception:
             self.errors += 1
@@ -198,7 +206,7 @@ class ArenaAdapter:
             raise_to = action.raise_to if kind == "raise" else None
             history.append(ActionRecord(state.street, "me", kind, raise_to))
             all_in = kind == "raise" and state.legal.max_raise_to is not None and raise_to is not None \
-                and raise_to >= state.legal.max_raise_to
+                and raise_to >= min(state.legal.max_raise_to, opponent_start(state))
             if kind == "raise" and not all_in and state.street < 4:
                 history.append(ActionRecord(state.street, "opp", "fold", None))   # no further turn: they folded
         try:
