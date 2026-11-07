@@ -95,7 +95,8 @@ def internal_failure(row):
 def healthy(row):
     r = row.get("result", {})
     return (valid(row) and not r.get("faults_a") and not r.get("faults_b")
-            and not r.get("disabled_a") and not r.get("disabled_b") and not internal_failure(row))
+            and not r.get("disabled_a") and not r.get("disabled_b") and not internal_failure(row)
+            and row.get("telemetry_complete", True))
 
 
 def reliability_failure(row):

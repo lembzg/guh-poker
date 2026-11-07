@@ -55,3 +55,13 @@ def test_report_before_start_is_safe_and_clear(tmp_path):
     assert result["test"] is None
     assert "Final test not available" in (tmp_path / "reports/MORNING_REPORT.md").read_text()
     assert json.loads((tmp_path / "reports/recommendation.json").read_text())["parameters_applied"] is False
+
+
+def test_missing_final_internal_counters_cannot_confirm_winner(tmp_path):
+    plan, state = inputs()
+    rows = [record(c, f, b, 0.1 if c == "v" else 0)
+            for b in range(35) for f in plan["fields"]["test"] for c in ("baseline", "v")]
+    rows[-1]["telemetry_complete"] = False
+    result = export(tmp_path, plan, state, rows, final=True)
+    assert result["status"] == "keep_defaults_no_confirmed_replacement"
+    assert result["test"]["failures"] == 1

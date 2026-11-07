@@ -104,7 +104,7 @@ def export(run, plan, state, rows, *, final=False):
     path = directory / "matches.csv"
     temp = path.with_suffix(".csv.tmp")
     columns = ["id", "phase", "candidate", "family", "opponent", "block", "seed", "deals", "ok",
-               "status", "bb_per_hand", "bb_per_100", "hands", "faults_a", "faults_b", "disabled_a",
+               "censored", "telemetry_complete", "status", "bb_per_hand", "bb_per_100", "hands", "faults_a", "faults_b", "disabled_a",
                "disabled_b", "think_a_s", "decisions", "latency_max_ms", "bank_fraction_max", "error"]
     with temp.open("w", newline="", encoding="utf-8") as stream:
         writer = csv.DictWriter(stream, columns)

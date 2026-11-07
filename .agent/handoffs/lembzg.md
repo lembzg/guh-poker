@@ -1,12 +1,13 @@
 # Handoff — lembzg
 
-Updated: 2026-11-07T01:35:58.868763+00:00
+Updated: 2026-11-07T01:42:17.235384+00:00
 Status: ready
 Task: #33 Report-only overnight sparring/tuning; DO NOT START until user explicitly asks
 Branch: lembzg/33-overnight-runner
-Commit: 5eeba1d Freeze reviewed bot revisions and reject hidden strategy errors (#33)
+Commit: this checkpoint — full recheck and complete telemetry guard (#33)
 
 ## Done
+- Full user-requested recheck: reject incomplete internal telemetry as healthy evidence; export censoring/completeness in CSV. Added regression coverage. Official guide unchanged; no live matches started.
 - Published PR #46 on lembzg/33-overnight-runner; stacked on #34. CI green, working tree clean before this metadata checkpoint.
 - Added tools/tune/ Python3.14 runner, copied-only parameter variants, eight-family search, shifted validation, locked 14-family final audit, paired match-cluster inference, durable raw results and morning reports.
 - Added frozen source/rules/default/interface checks, optional --bot-ref, restart/deadline/resource guards and Linux worker group recovery. No production strategy/config/table edits.
@@ -19,7 +20,7 @@ Commit: 5eeba1d Freeze reviewed bot revisions and reject hidden strategy errors 
 - tools/tune/; tests/tools/tune/; docs/OVERNIGHT.md; README.md navigation; this handoff.
 
 ## Tests
-- Focused Python3.14 suite with optional real-SDK no-game packing: 29 passed. Ruff and scripts/check.sh passed.
+- Focused Python3.14 suite with optional real-SDK no-game packing: 32 passed. Ruff and scripts/check.sh passed.
 - Actual CLI prepare/plan/report tested: 32 candidates frozen; zero game jobs, no state/timer. Run without --start refused.
 - Alternative --bot-ref preparation tested on eulabet/overnight; five configurations packed with validate=False and no act calls. No games played.
 - Synthetic full coordinator test covers search/validation/test locking and immutable source; fake-arena telemetry test uses fabricated records only.

@@ -85,6 +85,9 @@ def pairing(job):
             "actions": dict(actions), "hand_counts": dict(counts), "worst_hands": worst,
             "positions": positions, "bot_metrics": summaries,
             "entry_errors": entry_errors,
+            "telemetry_complete": (set(summaries) == {"0", "1"}
+                and all(p.get("final") is True for p in summaries.values())
+                and sum(p.get("decisions", -1) for p in summaries.values()) == latency["count"]),
             "bank_fraction_max": max(halves, default=0)/(job["deals"]*RULES["think_budget_per_deal"])}
 
 

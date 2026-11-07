@@ -3,10 +3,13 @@ import json
 import sys
 from types import ModuleType, SimpleNamespace
 
+import pytest
+
 from tools.tune.worker import pairing
 
 
-def test_worker_collects_real_interface_fields_from_synthetic_pairing(tmp_path, monkeypatch):
+@pytest.mark.parametrize("final,reported_decisions,complete", [(True, 1, True), (False, 1, False), (True, 0, False)])
+def test_worker_collects_real_interface_fields_from_synthetic_pairing(tmp_path, monkeypatch, final, reported_decisions, complete):
     class Contestant:
         def __init__(self):
             self.decisions, self._stretch_think = 0, 0.0
@@ -31,7 +34,7 @@ def test_worker_collects_real_interface_fields_from_synthetic_pairing(tmp_path, 
                            net=[20, -20], ended_by="showdown"))
         with (tmp_path / "candidate.log").open("w") as log:
             for seat in (0, 1):
-                log.write("OVERNIGHT_METRICS " + json.dumps(dict(seat=seat, final=True, fallbacks={"bank": 2})) + "\n")
+                log.write("OVERNIGHT_METRICS " + json.dumps(dict(seat=seat, final=final, decisions=reported_decisions, fallbacks={"bank": 2})) + "\n")
         return SimpleNamespace(to_dict=lambda: dict(status="complete", mean_bb=0.0, faults_a=0, faults_b=0))
     arena = ModuleType("arena")
     arena.__path__ = []
@@ -41,6 +44,7 @@ def test_worker_collects_real_interface_fields_from_synthetic_pairing(tmp_path, 
     for name, module in (("arena", arena), ("arena.duel", duel), ("arena.specs", specs)):
         monkeypatch.setitem(sys.modules, name, module)
     result = pairing(dict(job_dir=str(tmp_path), a="a", b="b", deals=200, seed=7, timeout=100))
+    assert result["telemetry_complete"] is complete
     assert result["latency"]["count"] == 2
     assert result["actions"] == {"flop:call": 2}
     assert result["positions"]["button"] == {"hands": 1, "net_bb": 1.0}

@@ -167,7 +167,8 @@ Open `results/overnight/night1/reports/MORNING_REPORT.md` first. It links/explai
 Latency p50/p95/p99 are explicitly histogram-bin upper bounds, not falsely precise quantiles. The
 maximum, mean, decision count, faults and thinking-bank usage are recorded. Internal fallback
 counters are retained; forced termination can leave internal telemetry partial,
-which is marked separately from the exact arena fault counters. Full card information
+which is marked separately from the exact arena fault counters. Missing final counters or a decision-count
+mismatch disqualifies a match from healthy evidence and prevents a confirmed replacement. Full card information
 exists only in evaluator audit files: it is never fed into a bot, used to predict deck seeds, or used
 as a policy input. The bot sees only its own cards and the official public state.
 
