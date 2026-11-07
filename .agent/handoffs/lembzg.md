@@ -1,37 +1,40 @@
 # Handoff — lembzg
 
-Updated: 2026-11-06T23:30:00+00:00
+Updated: 2026-11-07T00:30:00+00:00
 Status: in-review
-Task: #14
-Branch: lembzg/14-import-v0
-Commit: 481ef5b
+Task: #11
+Branch: lembzg/11-preflop-arena
+Commit: pending first push of this branch
 
 ## Done
-- Imported Quant byte-for-byte into bots/v0/ (bot.py, BOT_README.md, data/preflop.json).
-- Added bots/v0/adapter.py (V0Bot), bots/v0/README.md, tests/bots/v0/.
-- Registered v0 in make_bot and deleted the contract stub in tests/bots/v0/conftest.py.
-- Rebased onto origin/main (43b4fdc). Still stacked on the #4 commit, because #17 isn't merged.
-- Reported harness bb/100 in PR #16 and marked it ready.
+- #4 merged (#17). #14 merged (#16). #27 opened for the v0 reuse decision, still undecided (its handoff is on lembzg/27-v0-reuse).
+- Tournament environment found: public repo Manchester-AI-Society/poker_bot_infrastructure, checked at 8b89346. It isn't vendored here.
+- Built bots/myteam (preflop tables, opponent model, postflop placeholder), its generators in tools/, tests/test_preflop.py and docs/preflop_crosscheck.md.
 
 ## In progress
-- PR #16 waits on #17. Merge #17 first, rebase #16 so its diff shows only #14, then squash-merge it.
+- Draft PR for #11, waiting on the human's decisions below. Not merged.
 
 ## Files touched
-- bots/v0/, tests/bots/v0/, the v0 line in bots/__init__.py
+- bots/myteam/, tools/gen_equity_table.py, tools/gen_ranges.py, tools/gen_crosscheck.py, tools/sim_pairings.py, tests/test_preflop.py, docs/preflop_crosscheck.md
 
 ## Tests
-- pytest, Python 3.12 with numpy, pytest and eval7: 95 passed, including 20 in tests/bots/v0 against the real core/interface.py.
-- check.sh passes, but only runs static checks. Neither it nor CI runs pytest until #3 lands.
-- Harness, seed 1, duplicate, 100bb, --hands 20000, commit 481ef5b. v0 vs random: +466.33 ± 41.07 bb/100. v0 vs always_call: +255.47 ± 13.88 bb/100. 0 illegal, 0 errors, v0 max 100.35 ms.
-- One-off, not in repo: 3,000 hands on the real Fullhouse engine, 5,918 decisions, 0 mismatches, 0 illegal.
+- tests/test_preflop.py, Python 3.14, needs ARENA_ROOT pointing at an infra checkout: 59 passed. It's skipped without ARENA_ROOT, and CI doesn't run pytest until #3 lands.
+- 200 separate 100-deal matches per opponent, exploits on: call +0.165, fold +0.711, random +2.644, shove +5.301, starter +0.118, all with CIs above 0. No-exploit copy +0.021. 0 faults.
+- Single 300-deal runs vs starter sometimes span 0, because the edge is smaller than that CI. See docs/preflop_crosscheck.md.
+- arena validate OK. arena pack OK on Python 3.14 (241 KB).
 
 ## Bugs / blockers
-- No python command on this laptop and no requirements file yet. Tests ran in a throwaway Python 3.12 venv outside the repo.
+- The infra clone and venvs are in this session's scratchpad, so they need recreating in a new session. See the header of tests/test_preflop.py and tools/sim_pairings.py.
+- python3.14 is at /opt/homebrew/bin/python3.14. There's no plain python command on this laptop.
 
 ## Decisions & dependencies
-- eval7 is needed (listed in PR for #3). CLAUDE.md requires a decision issue for new deps; do this with the post-merge reuse proposal.
+- Rules differ from the brief: the current README and event.json describe one round-robin, not groups plus a final.
+- bots/myteam targets the real arena API. bots/main and its open PRs (#19, #20, #21) target our own docs/API.md, so the team has two bots. Needs a captain decision.
+- Hand composition in the charts is heuristic. Only frequencies come from the reference.
+- #11's acceptance criteria name bots/main/preflop.py, so the PR says Refs #11, not Closes.
 
 ## Next steps
-1. Merge #17 (contract PR, approved; needs the human's go-ahead).
-2. Rebase #16 on origin/main, re-run tests, squash-merge.
-3. After merge, open the decision issue on reusing v0 in bots/main, including the eval7 dependency.
+1. Get the human's answer on which bot we enter, and on the team name for arena pack.
+2. Build real postflop play. The placeholder never bets, and it's the largest known gap.
+3. Tell teammates the environment is available, and update #8 and docs/ENVIRONMENT.md.
+4. Review PR #19, requested from lembzg, and get the decision on #27.
