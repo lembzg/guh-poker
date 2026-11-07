@@ -2,9 +2,9 @@
 
 <!-- Only you edit your file. Overwrite (don't append) at each checkpoint. Format: .agent/RECOVERY.md -->
 
-Updated: 2026-11-07T15:07:29+00:00
-Status: waiting
-Task: Entry v3 packed (slower-learning gates for 30/60-deal format). Not uploaded (human's call). PR #54 awaits lembzg.
+Updated: 2026-11-07T15:14:46+00:00
+Status: frozen
+Task: FROZEN entry v3 (human approved freeze). results/submission/gemiclaudex.pkl sha256 5343f326…; upload is the human's call. No further strategy changes.
 Branch: eulabet/final-allin-fix
 Commit: 37f190c
 
