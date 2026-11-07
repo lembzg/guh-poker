@@ -154,3 +154,27 @@ def test_sticky_caller_gets_big_value_bets():
     nuts = spot("Qh Jh", "Th 9c 8d 2s Kd", pot=40)
     a = postflop_action(nuts, STATION, top_percent_range(0.9), opp_counts=sticky)
     assert a.kind == "raise" and a.raise_to - nuts.my_committed >= 1.4 * 40
+
+
+def test_bluff_gate_prices_actual_minimum_bet(monkeypatch):
+    """#44: #42's confidence gate must price #43's actual legal action."""
+    from dataclasses import replace
+
+    monkeypatch.setattr("bots.main.postflop.equity", lambda *args, **kwargs: 0.0)
+    state = spot("7c 6d", "As Kd Qh 3s 2c")
+    assert postflop_action(state, FOLDER, None, opp_counts=FOLD_COUNTS).kind == "raise"
+    # A legal minimum of 60 into 20 needs 75% folds plus the river margin;
+    # the nominal 33% size would incorrectly pass on the same observations.
+    state = replace(state, legal=replace(state.legal, min_raise_to=70))
+    assert postflop_action(state, FOLDER, None, opp_counts=FOLD_COUNTS).kind == "check"
+
+
+def test_bluff_gate_prices_short_opponent_effective_bet(monkeypatch):
+    from dataclasses import replace
+
+    monkeypatch.setattr("bots.main.postflop.equity", lambda *args, **kwargs: 0.0)
+    state = replace(spot("7c 6d", "As Kd Qh 3s 2c"), opp_starting_stack=14)
+    counts = {"fold_to_bet": (20, 50)}
+    # Only four additional chips are contestable: 4 / 24 + 0.08 < lower bound.
+    action = postflop_action(state, None, None, opp_counts=counts)
+    assert action.kind == "raise" and action.raise_to == 14

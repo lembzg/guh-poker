@@ -5,12 +5,12 @@ One decision on the flop, turn or river:
      when None, a default from who raised preflop.
   2. Facing a bet: raise strong equity, call when equity beats the pot odds plus a margin, else fold.
   3. Checked to: value-bet above a threshold with a size picked by equity and board texture; otherwise
-     bet as a bluff / semi-bluff only when its expected value beats checking, given how often they fold.
+     bet as a bluff / semi-bluff only when a conservative fold estimate clears the actual bet price.
   4. Exploit knobs from OpponentStats (prior defaults when None): vs a calling station bet thinner and
-     bigger and stop bluffing; vs a folder bluff more; vs a maniac check-call and trap.
+     with bounded sizes and stop bluffing; vs a measured folder bluff selectively; vs a maniac check-call and trap.
 
-Ideas kept from v0 (bots/v0/bot.py): a call cushion over pot odds, a stack-off guard, 45%/70% pot base
-sizes by texture. Thresholds are starting points, to be tuned in the harness.
+Nonterminal calls retain a call cushion and stack-off guard. Terminal calls use contestable-pot
+equity; value sizes and bluff confidence follow #40. Thresholds remain empirical starting points.
 """
 from __future__ import annotations
 

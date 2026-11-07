@@ -97,3 +97,35 @@ Unpacked payloads against @shove, 200 duplicate deals each: main seed 404,
 +4.034 bb/hand (95% CI +0.311..+7.756), 6.2s thinking. Both have zero faults.
 These smoke runs verify packed legality and terminal routing; they are not
 before/after improvement estimates. Combo helpers are from #32 at c457065a.
+
+## Final combined candidate (#44)
+
+Branch `lembzg/44-final-combined` integrates #32 preflop helpers, #34 combined
+routing, #41 opponent-stack contract, #43 all-in corrections, #42 research
+postflop/hidden-SB-fold fixes, and #36 requirements/test setup. The helper tables
+are now tracked in this checkout; no separate preflop checkout is needed.
+
+```bash
+python -m adapters.arena.build --team final-combined --strategy combo --out results/arena/final-combined
+# From the organisers' infrastructure checkout:
+python -m arena validate /absolute/path/to/guh-poker/results/arena/final-combined
+python -m arena pack /absolute/path/to/guh-poker/results/arena/final-combined --team final-combined --out /path/to/submissions
+```
+
+Use `--strategy combo` explicitly. Default `main` still uses the fallback preflop
+module because table-driven arena preflop speaks the organisers' SDK directly.
+The standalone `bots/myteam` bot retains its old postflop placeholder; it is not
+the final combined entry. Final preflop terminal calls route through MainBot's
+all-in policy; ordinary preflop decisions use #32, and postflop uses #42 with
+#43's effective-stack accounting. Bluff confidence is checked against the actual
+legal effective bet, including minimum-raise and short-opponent constraints.
+
+Development checks: install `requirements.txt` in a virtual environment, then
+run `./scripts/check.sh`. Real-engine preflop tests require the infrastructure
+checkout and its `cloudpickle` dependency:
+`ARENA_ROOT=/path/to/poker_bot_infrastructure python -m pytest -q tests/test_preflop.py`.
+A plain development run skips that module if `ARENA_ROOT` is unset.
+The combined candidate's smoke verification is recorded in
+[integration-change-ledger.md](integration-change-ledger.md). Those checks verify
+integration/legality, not tournament superiority; the separate final-test work
+must compare the exact combined artifact on held-out deals before entry selection.
