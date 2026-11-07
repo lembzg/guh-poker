@@ -147,3 +147,10 @@ def test_features():
     k = knobs(None)
     assert not (k.station or k.folder or k.maniac)
     assert knobs(STATION).station and knobs(FOLDER).folder and knobs(MANIAC).maniac
+
+
+def test_sticky_caller_gets_big_value_bets():
+    sticky = {"fold_to_bet": (0, 80), "fold_to_bet_by_street": {}, "bet_when_checked_to": (0, 40)}
+    nuts = spot("Qh Jh", "Th 9c 8d 2s Kd", pot=40)
+    a = postflop_action(nuts, STATION, top_percent_range(0.9), opp_counts=sticky)
+    assert a.kind == "raise" and a.raise_to - nuts.my_committed >= 1.4 * 40

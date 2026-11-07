@@ -65,6 +65,7 @@ class Knobs:
     fold_to_bet: float
     fold_to_cbet: float
     aggression: float
+    sticky: bool = False              # almost never folds (q95 fold < 0.12, n >= 20): big bets still get called
     hf_bettor: bool = False           # bets when checked to with q10 > 0.65 (n >= 15)
     auto_bettor: bool = False         # q10 > 0.72 (n >= 25): call at raw pot odds
     counts: dict | None = field(default=None, compare=False)
@@ -82,11 +83,12 @@ def knobs(opp: OpponentStats | None, counts: dict | None = None) -> Knobs:
         f, n = counts.get("fold_to_bet", (0, 0))
         b, nc = counts.get("bet_when_checked_to", (0, 0))
         station = n >= 10 and upper_bound(f, n) < 0.30
+        sticky = n >= 20 and upper_bound(f, n) < 0.12
         folder = n >= 10 and lower_bound(f, n) > 0.50
         hf = nc >= 15 and lower_bound(b, nc, Z10) > 0.65
         auto = nc >= 25 and lower_bound(b, nc, Z10) > 0.72
         return Knobs(station=station, folder=folder, maniac=af > 2.5 or auto, fold_to_bet=fb, fold_to_cbet=fcb,
-                     aggression=af, hf_bettor=hf or auto, auto_bettor=auto, counts=counts)
+                     aggression=af, sticky=sticky, hf_bettor=hf or auto, auto_bettor=auto, counts=counts)
     return Knobs(
         station=fb < 0.30 or wtsd > 0.55,
         folder=fb > 0.55,
@@ -165,6 +167,8 @@ def _value_size(eq: float, wet: bool, k: Knobs, spr: float) -> float:
     """Research sizing (#40): thin / clear / strong value. Stations: never overbet. Folders: small."""
     if spr <= 1.5 and eq >= 0.70:
         return 10.0                           # shallow: get it all in
+    if k.sticky:   # research: 125-150% only once large bets are demonstrably still called
+        return 0.50 if eq < 0.70 else 1.00 if eq < 0.82 else 1.50
     if k.station:
         return 0.33 if eq < 0.70 else 0.60 if eq < 0.82 else 0.85
     if k.folder:
