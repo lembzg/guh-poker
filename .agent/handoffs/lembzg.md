@@ -1,40 +1,41 @@
 # Handoff — lembzg
 
-Updated: 2026-11-07T00:46:53.681623+00:00
+Updated: 2026-11-07T01:42:17.235384+00:00
 Status: ready
-Task: #27 Combined prototype integration fixes (PR #34)
-Branch: lembzg/34-combo-fixes
-Commit: 337f7ad Merge gauntlet builder support into combined candidate (#27)
+Task: #33 Report-only overnight sparring/tuning; DO NOT START until user explicitly asks
+Branch: lembzg/33-overnight-runner
+Commit: 195fd0f Reject incomplete overnight telemetry as winning evidence (#33)
 
 ## Done
-- Resolved concurrent #38 builder conflict, preserving --bot / positional gauntlet API and adding two compatibility tests; final adapter suite: 25 passed.
-- PR #34 integration fix: merged latest main at 8ab7c46 for #19, added --strategy combo / --preflop-dir build, preserved default MainBot build.
-- Combo wrapper records the actual fallback action and keeps the returned action unchanged on bookkeeping errors. Added response-conversion, routing and builder regression tests.
-- docs/ENVIRONMENT.md documents the combined build, dependency on #32, upload-envelope unpacking and evaluation limits.
+- Full user-requested recheck: reject incomplete internal telemetry as healthy evidence; export censoring/completeness in CSV. Added regression coverage. Official guide unchanged; no live matches started.
+- Published PR #46 on lembzg/33-overnight-runner; stacked on #34. CI green, working tree clean before this metadata checkpoint.
+- Added tools/tune/ Python3.14 runner, copied-only parameter variants, eight-family search, shifted validation, locked 14-family final audit, paired match-cluster inference, durable raw results and morning reports.
+- Added frozen source/rules/default/interface checks, optional --bot-ref, restart/deadline/resource guards and Linux worker group recovery. No production strategy/config/table edits.
+- docs/OVERNIGHT.md contains exact CachyOS/uv setup, safe preparation, explicit later start, output interpretation, rules and limits. README links it.
 
 ## In progress
-- Implementation and local verification complete. PR #34 remains a draft pending entry selection and tuning.
+- No implementation work remains. Published draft PR #46 with green CI; waiting for explicit user instruction before any real sparring, tuning, validate, or pack-with-validation command.
 
 ## Files touched
-- adapters/arena/{build,combo_bot_example,translate}.py; tests/adapters/; docs/ENVIRONMENT.md; this handoff.
+- tools/tune/; tests/tools/tune/; docs/OVERNIGHT.md; README.md navigation; this handoff.
 
 ## Tests
-- Python 3.12 dev venv: python -m pytest -q -> 185 passed after #38 compatibility merge.
-- Python 3.14 without numpy/eval7: adapters + MainBot wiring/fallback/postflop/opponent tests -> 70 passed.
-- ./scripts/check.sh -> OK; git diff --check -> clean.
-- Arena @8b89346: source validate -> 40 hands, zero faults; pack with fresh-process validation -> 519 KB (07d401e467ca).
-- Packed payload only: random seed 101 and starter seed 102, 200 duplicate deals each -> 800 total hands, zero faults, 10.5s / 9.5s aggregate thinking.
+- Focused Python3.14 suite with optional real-SDK no-game packing: 32 passed. Ruff and scripts/check.sh passed.
+- Actual CLI prepare/plan/report tested: 32 candidates frozen; zero game jobs, no state/timer. Run without --start refused.
+- Alternative --bot-ref preparation tested on eulabet/overnight; five configurations packed with validate=False and no act calls. No games played.
+- Synthetic full coordinator test covers search/validation/test locking and immutable source; fake-arena telemetry test uses fabricated records only.
 
 ## Bugs / blockers
-- #32 is still unmerged: use --preflop-dir pointing to its bots/myteam helpers; no tables were changed or bundled into this PR.
-- No tuning or paired improvement evidence added. #35 remains separate. Existing hidden fold / last-hand inference limitations remain.
+- No real match has been run for this task, by the user's explicit instruction. Live packed qualification occurs only after --start. Linux/CachyOS gameplay remains to be exercised on the PC.
+- PC is CachyOS, i7-12700F, RTX3060; memory detected at runtime. CPU-only arena; no GPU dependency.
+- #42/#43 and other bot work are unmerged. Choose the reviewed bot/helper source before preparation; do not merge or select unreviewed changes automatically.
 
 ## Decisions & dependencies
-- User asked to fix PR #34. Scope chosen: reproducible integration and reliability, preserving strategy thresholds and draft status.
-- Python 3.14 arena/dev environments and infra remain in /private/tmp/claude-501/-Users-arryl-Desktop-guh-poker/bdb98b8b-e1f1-428f-90b3-812c4dd5d3bb/scratchpad/.
-- Verified artifact and report: /Users/arryl/Documents/Codex/2026-11-07/here-s-what-to-run-overnight/outputs/pr34/.
+- Runner branch starts at verified #34 head 9a9575a and is independent of current main checkout's #39 work. Main checkout untouched.
+- Source arena pinned to 8b893461c0d020ae8ed9c78aed298cd698e025a0; Python3.14; only arena requirements; no numpy/eval7 runtime. Rules downloaded/verified from official site.
+- Results-only: never apply parameters, alter production files, merge, upload or submit. No overnight process, automation or timer has been started.
 
 ## Next steps
-1. Check PR #34 CI on its updated head and inspect final diff.
-2. Select the tournament entry and actual team name; rebuild and pack after any strategy changes.
-3. Run paired tournament-length tuning across diverse opponents, then confirm selected variants with fresh seeds (#33).
+1. User clones this branch on PC and follows docs/OVERNIGHT.md setup/prepare/plan only.
+2. Before bed, only after the user explicitly says run, execute the documented --start command on the PC with sleep inhibition; use prepared reviewed source.
+3. In morning, read MORNING_REPORT.md, recommendation.json and CSV/SQLite data. Do not apply changes or retune unless separately requested.

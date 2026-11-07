@@ -4,6 +4,7 @@ Our heads-up no-limit hold'em bot for a bot-vs-bot tournament. It plays solid de
 
 - How we work (3 people, each with a Claude Code agent coordinating through GitHub): [CLAUDE.md](CLAUDE.md)
 - New here? [docs/ONBOARDING.md](docs/ONBOARDING.md)
+- Eight-hour report-only sparring: [setup, preparation and explicit later start](docs/OVERNIGHT.md)
 - Design: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · contracts: [docs/API.md](docs/API.md) · rules and results: [docs/PRODUCT.md](docs/PRODUCT.md)
 
 ```bash
