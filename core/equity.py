@@ -8,17 +8,22 @@ Hand strength encoding (higher is better, equal = tie):
 Categories: 0 high card, 1 pair, 2 two pair, 3 trips, 4 straight, 5 flush, 6 full house, 7 quads,
 8 straight flush. Kicker masks compare correctly as integers because they hold the same number of bits.
 
-`equity` evaluates many hands at once with numpy; `rank7` is a pure-Python twin built from the same
-lookup tables (tests check they agree).
+`equity` and `rank7` are pure Python (the tournament sandbox has no numpy). `_rank_matrix` is a numpy
+twin for offline tools (EV engine, analysis); numpy is optional and tests check the two agree.
 """
 from __future__ import annotations
 
 import json
+import random
 import time
-from functools import lru_cache
+from bisect import bisect_right
+from itertools import combinations
 from pathlib import Path
 
-import numpy as np
+try:  # numpy is optional: only _rank_matrix (offline tools, EV engine) needs it. The tournament has none.
+    import numpy as np
+except ImportError:  # pragma: no cover - exercised by the no-numpy test
+    np = None
 
 RANKS = "23456789TJQKA"
 SUITS = "cdhs"
@@ -59,11 +64,12 @@ def _build_tables():
 
 
 _HB_L, _TOP_L, _ST_L = _build_tables()
-_HB = np.array(_HB_L, dtype=np.int64)
-_TOP1, _TOP2, _TOP3, _TOP5 = (np.array(_TOP_L[k], dtype=np.int64) for k in (1, 2, 3, 5))
-_ST = np.array(_ST_L, dtype=np.int64)
-_PW = (1 << np.arange(13, dtype=np.int64))
-_AR13 = np.arange(13)
+if np is not None:
+    _HB = np.array(_HB_L, dtype=np.int64)
+    _TOP1, _TOP2, _TOP3, _TOP5 = (np.array(_TOP_L[k], dtype=np.int64) for k in (1, 2, 3, 5))
+    _ST = np.array(_ST_L, dtype=np.int64)
+    _PW = (1 << np.arange(13, dtype=np.int64))
+    _AR13 = np.arange(13)
 
 
 # ---------------------------------------------------------------- card helpers
@@ -91,8 +97,9 @@ def _hand_class(a: int, b: int) -> str:
 
 # ---------------------------------------------------------------- evaluators
 
-def _rank_matrix(cards: np.ndarray) -> np.ndarray:
-    """Strength of each row of an (N, k) int array of card indices, 5 <= k <= 7, distinct per row."""
+def _rank_matrix(cards):
+    """Strength of each row of an (N, k) int array of card indices, 5 <= k <= 7, distinct per row.
+    Needs numpy (offline tools only); the bot itself uses the pure-Python _rank_ints."""
     ranks = cards >> 2
     suits = cards & 3
     rbits = np.left_shift(1, ranks).astype(np.int64)
@@ -192,8 +199,8 @@ def rank7(cards: tuple[str, ...]) -> int:
 
 # ---------------------------------------------------------------- equity
 
-def _range_arrays(opp_range: Range, dead: set[int]) -> tuple[np.ndarray, np.ndarray]:
-    """Combos (M, 2) and weights (M,) of opp_range, minus dead cards and non-positive weights."""
+def _range_lists(opp_range: Range, dead: set[int]) -> tuple[list[tuple[int, int]], list[float]]:
+    """Combos and weights of opp_range, minus dead cards and non-positive weights."""
     acc: dict[tuple[int, int], float] = {}
     for (a, b), w in opp_range.items():
         if not w or w <= 0:
@@ -203,14 +210,7 @@ def _range_arrays(opp_range: Range, dead: set[int]) -> tuple[np.ndarray, np.ndar
             continue
         key = (ia, ib) if ia > ib else (ib, ia)
         acc[key] = acc.get(key, 0.0) + float(w)
-    if not acc:
-        return np.empty((0, 2), dtype=np.int64), np.empty(0)
-    return np.array(list(acc.keys()), dtype=np.int64), np.array(list(acc.values()), dtype=np.float64)
-
-
-def _all_combos(live: np.ndarray) -> np.ndarray:
-    i, j = np.triu_indices(len(live), k=1)
-    return np.stack([live[i], live[j]], axis=1)
+    return list(acc.keys()), list(acc.values())
 
 
 def equity(hole: tuple[str, str], board: tuple[str, ...], opp_range: Range | None = None,
@@ -220,6 +220,7 @@ def equity(hole: tuple[str, str], board: tuple[str, ...], opp_range: Range | Non
 
     A range with no live combos left after removing dead cards is treated as any two cards.
     On the river the result is exact (every live opponent combo is enumerated; samples is ignored).
+    Pure Python (no numpy), so it runs in the tournament sandbox.
     """
     t0 = time.perf_counter()
     hero = [_idx(c) for c in hole]
@@ -232,50 +233,59 @@ def equity(hole: tuple[str, str], board: tuple[str, ...], opp_range: Range | Non
     if len(dead) != len(hero) + len(brd):
         raise ValueError(f"duplicate cards in hole {hole!r} / board {board!r}")
 
-    live = np.array(sorted(set(range(52)) - dead), dtype=np.int64)
-    combos = probs = None
+    live = [c for c in range(52) if c not in dead]
+    combos: list[tuple[int, int]] | None = None
+    weights: list[float] = []
     if opp_range is not None:
-        combos, weights = _range_arrays(opp_range, dead)
-        if len(combos):
-            probs = weights / weights.sum()
-        else:
+        combos, weights = _range_lists(opp_range, dead)
+        if not combos:
             combos = None
 
     need = 5 - len(brd)
-    hero_arr = np.array(hero, dtype=np.int64)
-    brd_arr = np.array(brd, dtype=np.int64)
-
+    rank = _rank_ints
     if need == 0:  # river: exact
+        h = rank(hero + brd)
         if combos is None:
-            combos = _all_combos(live)
-            probs = np.full(len(combos), 1.0 / len(combos))
-        h = _rank_ints(hero + brd)
-        o = _rank_matrix(np.concatenate([combos, np.broadcast_to(brd_arr, (len(combos), 5))], axis=1))
-        return float(probs @ ((h > o) + 0.5 * (h == o)))
+            combos = list(combinations(live, 2))
+            weights = [1.0] * len(combos)
+        score = total = 0.0
+        for (a, b), w in zip(combos, weights):
+            o = rank([a, b] + brd)
+            score += w if h > o else (w / 2 if h == o else 0.0)
+            total += w
+        return score / total
 
-    rng = np.random.default_rng(seed)
-    pos = np.full(52, -1, dtype=np.int64)
-    pos[live] = np.arange(len(live))
-    total = max(1, int(samples))
+    rng = random.Random(seed)
+    sample = rng.sample
+    base = hero + brd
+    total_n = max(1, int(samples))
     done = 0
     score = 0.0
-    while done < total:
-        n = min(_CHUNK, total - done)
-        keys = rng.random((n, len(live)))
+    cum = None
+    if combos is not None:
+        cum, acc = [], 0.0
+        for w in weights:
+            acc += w
+            cum.append(acc)
+    chunk = 250
+    while done < total_n:
+        n = min(chunk, total_n - done)
         if combos is None:
-            # The 2 smallest keys give the opponent's hole cards, the next `need` give the board.
-            pick = np.argpartition(keys, [1, need + 1], axis=1)[:, :need + 2]
-            drawn = live[pick]
-            opp, extra = drawn[:, :2], drawn[:, 2:]
+            for _ in range(n):
+                d = sample(live, need + 2)
+                ext = d[2:]
+                h = rank(base + ext)
+                o = rank(d[:2] + brd + ext)
+                score += 1.0 if h > o else (0.5 if h == o else 0.0)
         else:
-            opp = combos[rng.choice(len(combos), size=n, p=probs)]
-            keys[np.arange(n)[:, None], pos[opp]] = 2.0      # opponent's cards can't be dealt again
-            pick = np.argpartition(keys, need - 1, axis=1)[:, :need]
-            extra = live[pick]
-        full_board = np.concatenate([np.broadcast_to(brd_arr, (n, len(brd))), extra], axis=1)
-        h = _rank_matrix(np.concatenate([np.broadcast_to(hero_arr, (n, 2)), full_board], axis=1))
-        o = _rank_matrix(np.concatenate([opp, full_board], axis=1))
-        score += float((h > o).sum()) + 0.5 * float((h == o).sum())
+            top = cum[-1]
+            for _ in range(n):
+                a, b = combos[bisect_right(cum, rng.random() * top)] if len(combos) > 1 else combos[0]
+                d = sample(live, need + 2)
+                ext = [c for c in d if c != a and c != b][:need]
+                h = rank(base + ext)
+                o = rank([a, b] + brd + ext)
+                score += 1.0 if h > o else (0.5 if h == o else 0.0)
         done += n
         if time_budget_ms is not None and (time.perf_counter() - t0) * 1000.0 >= time_budget_ms:
             break
@@ -315,10 +325,13 @@ def range_from_classes(classes: dict[str, float]) -> Range:
     return rng
 
 
-@lru_cache(maxsize=1)
+# Loaded once at import, so `arena pack` captures it by value: files on disk aren't available at play time.
+_PREFLOP_RANKING_CLASSES: tuple[str, ...] = tuple(
+    row[0] for row in json.loads(_PREFLOP_RANKING.read_text())["ranking"])
+
+
 def _preflop_ranking() -> tuple[str, ...]:
-    data = json.loads(_PREFLOP_RANKING.read_text())
-    return tuple(row[0] for row in data["ranking"])
+    return _PREFLOP_RANKING_CLASSES
 
 
 def top_percent_range(pct: float) -> Range:

@@ -37,6 +37,11 @@ except Exception as e:
     log.warning("opponent model unavailable, using neutral stats: %r", e)
 
 TIME_LEFT_SHARE = 0.25   # never spend more than this share of a reported clock on one decision
+# Tournament clock (docs/PRODUCT.md): 1 s per move, plus a bank of 0.2 s x deals per half; overdrawing the
+# bank disables the bot for the match. We aim to average well under it and fall back when running hot.
+DEFAULT_BUDGET_MS = 200        # per decision (hard limit is 1000 ms)
+BANK_PER_HAND_S = 0.08         # our target average per hand (the bank allows 0.2)
+BANK_SLACK_S = 2.0             # early-match slack before the average is enforced
 SAFETY_MS = 15.0         # headroom for thread hand-off, the fallback and clamping
 POSTFLOP_SHARE = 0.6     # share of the budget handed to postflop's equity sampling
 
@@ -77,10 +82,12 @@ def _run_with_timeout(fn, timeout_s: float):
 class MainBot:
     name = "main"
 
-    def __init__(self, time_budget_ms: int = 500, **cfg):
+    def __init__(self, time_budget_ms: int = DEFAULT_BUDGET_MS, **cfg):
         self.time_budget_ms = float(time_budget_ms)
         self.cfg = cfg
         self.fallbacks: Counter = Counter()   # reason -> count; read by tests and tuning scripts
+        self.think_s = 0.0                    # total time spent in act() this match
+        self.hands_seen: set = set()
         self.model = None
         self._new_model()
 
@@ -96,6 +103,8 @@ class MainBot:
 
     def new_match(self, match_id: str, opponent: str | None) -> None:
         self.fallbacks.clear()
+        self.think_s = 0.0
+        self.hands_seen = set()
         self._new_model()
 
     def hand_over(self, result: HandResult) -> None:
@@ -109,6 +118,16 @@ class MainBot:
     def act(self, state: GameState) -> Action:
         start = time.perf_counter()
         try:
+            return self._act(state, start)
+        finally:
+            self.think_s += time.perf_counter() - start
+
+    def _act(self, state: GameState, start: float) -> Action:
+        try:
+            self.hands_seen.add(state.hand_id)
+            if self.think_s > BANK_PER_HAND_S * len(self.hands_seen) + BANK_SLACK_S:
+                self.fallbacks["bank"] += 1           # running hot: protect the thinking bank
+                return self._fallback(state)
             budget_ms = self._budget_ms(state)
             strategy = self._strategy_for(state, budget_ms)
             if strategy is None:

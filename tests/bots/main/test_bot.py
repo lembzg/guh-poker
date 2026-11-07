@@ -137,3 +137,42 @@ def test_harness_1000_hands_vs_random_no_illegal():
     res = play_match(MainBot(), "random", hands=1000, seed=3, duplicate=True)
     assert res["illegal_a"] == 0 and res["errors_a"] == 0
     assert res["a_ms_max"] < 500
+
+
+def test_bank_guard_falls_back_when_running_hot(patch):
+    patch(postflop=lambda s, o, r, time_budget_ms=None: Action("check"))
+    bot = MainBot()
+    bot.think_s = 100.0                      # pretend we've already overspent
+    a = bot.act(postflop_state())
+    assert a.kind == "raise" and bot.fallbacks["bank"] == 1   # fallback bets top pair
+    bot.new_match("m2", None)
+    assert bot.think_s == 0.0 and bot.act(postflop_state()) == Action("check")
+
+
+def test_runs_without_numpy():
+    import subprocess
+    import sys
+    from pathlib import Path
+    code = r'''
+import importlib.abc, sys
+class Block(importlib.abc.MetaPathFinder):
+    def find_spec(self, name, path, target=None):
+        if name == "numpy" or name.startswith("numpy."):
+            raise ImportError("numpy blocked (tournament sandbox)")
+sys.meta_path.insert(0, Block())
+import bots.main.bot as B
+from pathlib import Path
+assert B._postflop is not None, "postflop failed to import without numpy"
+if Path("bots/main/opponent.py").exists():
+    assert B._OpponentModel is not None, "opponent model failed to import without numpy"
+from tests.bots.main.test_fallback import make_state
+bot = B.MainBot()
+for s in [make_state(("As", "Ah"), facing=10, pot=30), make_state(("As", "Kd"), ("Ah", "7c", "2d"))]:
+    a = bot.act(s)
+    assert a.kind in ("fold", "check", "call", "raise"), a
+assert sum(bot.fallbacks.values()) <= 1, bot.fallbacks   # preflop may be unavailable (#11)
+print("ok")
+'''
+    root = Path(__file__).resolve().parents[3]
+    out = subprocess.run([sys.executable, "-c", code], cwd=root, capture_output=True, text=True, timeout=60)
+    assert out.returncode == 0 and "ok" in out.stdout, out.stderr[-2000:]
