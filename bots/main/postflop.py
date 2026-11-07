@@ -37,15 +37,12 @@ STACKOFF_MARGIN = 0.05
 
 # Research rules (#40, deep-research report): exploit only on confident counts.
 BLUFF_MARGIN = {2: 0.04, 3: 0.06, 4: 0.08}  # required lower-bound fold rate above break-even, by street
-BARREL_MIN_OBS = 22                         # turn/river pure-air barrels need this many same-street samples
+BARREL_MIN_OBS = 15                         # turn/river pure-air barrels need this many same-street samples
 BLUFF_SIZES = (0.33, 0.5, 0.67)             # smallest passing size wins: small bluffs need fewer folds
 Z05, Z10 = 1.645, 1.2816
-# Gates and Beta prior are 1.5x the #40 defaults (prior 5, n 10/20/15/25/15): the 30/60-deal match format
-# favours waiting for evidence. Organisers'-engine A/B, fresh seeds: 30 deals +0.09 +- 0.03 bb/hand (60 seeds),
-# 60 deals +0.03 +- 0.05 (40 seeds); +0.2 vs calling stations, -0.08 vs starter clone, 0 faults.
 
 
-def beta_bounds(hits: float, n: int, prior: float = 7.0) -> tuple[float, float]:
+def beta_bounds(hits: float, n: int, prior: float = 5.0) -> tuple[float, float]:
     """(mean, sd) of Beta(prior + hits, prior + n - hits); normal approximation is fine for a, b >= 5."""
     a, b = prior + hits, prior + n - hits
     return a / (a + b), math.sqrt(a * b / ((a + b) ** 2 * (a + b + 1)))
@@ -69,9 +66,9 @@ class Knobs:
     fold_to_bet: float
     fold_to_cbet: float
     aggression: float
-    sticky: bool = False              # almost never folds (q95 fold < 0.12, n >= 30): big bets still get called
-    hf_bettor: bool = False           # bets when checked to with q10 > 0.65 (n >= 22)
-    auto_bettor: bool = False         # q10 > 0.72 (n >= 37): call at raw pot odds
+    sticky: bool = False              # almost never folds (q95 fold < 0.12, n >= 20): big bets still get called
+    hf_bettor: bool = False           # bets when checked to with q10 > 0.65 (n >= 15)
+    auto_bettor: bool = False         # q10 > 0.72 (n >= 25): call at raw pot odds
     counts: dict | None = field(default=None, compare=False)
 
 
@@ -86,11 +83,11 @@ def knobs(opp: OpponentStats | None, counts: dict | None = None) -> Knobs:
     if counts:
         f, n = counts.get("fold_to_bet", (0, 0))
         b, nc = counts.get("bet_when_checked_to", (0, 0))
-        station = n >= 15 and upper_bound(f, n) < 0.30
-        sticky = n >= 30 and upper_bound(f, n) < 0.12
-        folder = n >= 15 and lower_bound(f, n) > 0.50
-        hf = nc >= 22 and lower_bound(b, nc, Z10) > 0.65
-        auto = nc >= 37 and lower_bound(b, nc, Z10) > 0.72
+        station = n >= 10 and upper_bound(f, n) < 0.30
+        sticky = n >= 20 and upper_bound(f, n) < 0.12
+        folder = n >= 10 and lower_bound(f, n) > 0.50
+        hf = nc >= 15 and lower_bound(b, nc, Z10) > 0.65
+        auto = nc >= 25 and lower_bound(b, nc, Z10) > 0.72
         return Knobs(station=station, folder=folder, maniac=af > 2.5 or auto, fold_to_bet=fb, fold_to_cbet=fcb,
                      aggression=af, sticky=sticky, hf_bettor=hf or auto, auto_bettor=auto, counts=counts)
     return Knobs(
