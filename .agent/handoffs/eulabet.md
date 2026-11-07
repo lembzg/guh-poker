@@ -2,32 +2,37 @@
 
 <!-- Only you edit your file. Overwrite (don't append) at each checkpoint. Format: .agent/RECOVERY.md -->
 
-Updated: 2026-11-07T00:10:37+00:00
-Status: in-progress
-Task: #8 Arena adapter + pack (#19 awaiting lembzg approval)
-Branch: eulabet/8-arena-adapter
-Commit: none
+Updated: 2026-11-07T01:01:18+00:00
+Status: waiting
+Task: Night break. PR #42 (research rules + #35) awaits lembzg contract approval; overnight runs by partner.
+Branch: eulabet/overnight
+Commit: (see git log)
 
 ## Done
-- Merged: #15 equity, #18 harness, #23 gauntlet, #25/#28 EV engine (tool), #20 postflop, #21 MainBot, #30 pure-Python runtime.
-- Rules + environment recorded in docs/PRODUCT.md, docs/ENVIRONMENT.md (organisers' site + repo Manchester-AI-Society/poker_bot_infrastructure).
+- Merged: #15 equity, #18 harness, #23 gauntlet, #25/#28 EV tool, #20 postflop, #21 MainBot, #30 pure-Python runtime, #31 arena adapter, #38 arena gauntlet. #19 opponent model merged by lembzg.
+- PR #42 (#40 research rules + #35 hidden SB folds): CI green, needs lembzg approval (contract label, additive API.md).
+- PR #34 combined prototype (lembzg added --strategy combo build).
+- eulabet/overnight = main + #42 + #34 + #32 merged; candidate builds, arena validate OK, vs starter +1.235 (1000 deals seed 11).
+- adapters/arena/overnight.sh: builds candidate + opponents, runs arena gauntlet per seed (default seeds 101-120, 2000 deals).
 
 ## In progress
-- #8: adapters/arena (their PokerBot/GameState ↔ our contract), build folder + arena pack/validate locally.
+- Partner runs overnight.sh (ARENA_ROOT = clone of organisers' repo with Python 3.14 venv).
 
 ## Files touched
-- adapters/arena/, tests/adapters/
+- adapters/arena/overnight.sh (this branch only)
 
 ## Tests
-- main suite green except tests/bots/v0 eval7 test (eval7 not installable).
+- overnight branch: 171 passed (core, bots/main, adapters, harness). Only failing test repo-wide: tests/bots/v0 eval7 (not ours).
 
 ## Bugs / blockers
-- Deadline 18:00 event day. Team name for arena pack still unknown (ask human).
-- v0 needs eval7 → unusable in sandbox (told lembzg on #27/#8).
+- Team name unknown → no .pkl uploaded yet. Deadline 18:00 event day (2026-11-07).
+- Combined bot weakest vs raise-or-fold 'hackathon' bot (~+0.2..+0.4, n.s.); lembzg's preflop vs frequent 3x openers (comment on #32).
 
 ## Decisions & dependencies
-- Organisers' infra cloned at scratchpad/infra (8b89346). Their history: post_small_blind/post_big_blind, call amount = chips added, bet/raise_to amount = street total, player ids seatN.
+- Entry = combined bot (lembzg #32 preflop + MainBot postflop with #42 rules) — pending team decision #27.
+- Arena: our seat is fixed per half (button 200 hands, then BB 200 hands, fresh process); act() only hook; no showdown cards.
 
 ## Next steps
-1. Finish adapter + tests; build bot folder; run arena validate/match/pack with Python 3.14 venv.
-2. Ask human for team name; produce .pkl.
+1. Read overnight results (results/arena/overnight/summary.txt on partner's machine); confirm no losing matchup.
+2. Get #42 approved/merged, then #34/#32 per #27; rebuild: python -m adapters.arena.build --team <name> --strategy combo --preflop-dir bots/myteam
+3. arena validate + arena pack --team <name>; upload EARLY; re-upload after any improvement.
