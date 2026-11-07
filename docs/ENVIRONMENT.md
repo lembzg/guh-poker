@@ -44,6 +44,8 @@ Anything about the environment or the likely opponents we could use: determinist
 ## Building the combined candidate (#34)
 
 The default `python -m adapters.arena.build --team NAME` still builds MainBot.
+The gauntlet's `--bot <harness opponent>` and positional `build(team, out, bot)` API are preserved;
+the combined strategy requires the default `--bot main`.
 For #32's table-driven preflop plus MainBot's postflop and opponent model, use:
 
 ```bash

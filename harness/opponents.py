@@ -181,6 +181,48 @@ class EquityBot(_Base):
         return Action("call") if eq >= lg.call_amount / (pot + lg.call_amount) + 0.05 else Action("fold")
 
 
+class PostflopJammer(_Base):
+    """Loose-passive preflop (calls anything, raises the top 20% to 3x), then shoves postflop with any pair
+    that uses a hole card, two overcards to the board, or a flush / open-ended straight draw; otherwise
+    check/fold. Tests how we defend against frequent postflop all-ins we can't see the cards of."""
+    name = "jam_postflop"
+
+    def __init__(self):
+        self._top = set(top_percent_range(0.20))
+
+    def act(self, state: GameState) -> Action:
+        lg = state.legal
+        a, b = state.hole_cards
+        if state.street == 1:
+            combo = (a, b) if (RANKS.index(a[0]), SUITS.index(a[1])) > (RANKS.index(b[0]), SUITS.index(b[1])) else (b, a)
+            if combo in self._top and lg.min_raise_to is not None and state.opp_committed <= 3 * state.big_blind:
+                return _raise_or_call(state, 3 * max(state.opp_committed, state.big_blind))
+            return Action("check") if lg.can_check else Action("call")
+        if self._wants_it(state):
+            if lg.max_raise_to is not None:
+                return Action("raise", lg.max_raise_to)
+            return Action("check") if lg.can_check else Action("call")
+        return Action("check") if lg.can_check else Action("fold")
+
+    @staticmethod
+    def _wants_it(state: GameState) -> bool:
+        hole = [RANKS.index(c[0]) for c in state.hole_cards]
+        board = [RANKS.index(c[0]) for c in state.board]
+        if hole[0] == hole[1] or set(hole) & set(board):
+            return True
+        if len(board) < 5 and min(hole) > max(board):
+            return True                                          # two overcards
+        if len(board) < 5:
+            suits = [c[1] for c in state.hole_cards + state.board]
+            if any(suits.count(s) >= 4 for s in {c[1] for c in state.hole_cards}):
+                return True                                      # flush draw
+            ranks = set(hole + board)
+            if any(all(r in ranks for r in range(lo, lo + 4)) and set(range(lo, lo + 4)) & set(hole)
+                   for lo in range(0, 10)):
+                return True                                      # four to a straight
+        return False
+
+
 OPPONENTS = {
     "random": RandomBot,
     "always_call": AlwaysCall,
@@ -191,4 +233,5 @@ OPPONENTS = {
     "min_raiser": MinRaiser,
     "three_bet_any": ThreeBetAny,
     "equity_bot": EquityBot,
+    "jam_postflop": PostflopJammer,
 }

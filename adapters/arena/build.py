@@ -1,9 +1,13 @@
 """Build a bot folder for the organisers' `arena pack` (#8).
 
-    python -m adapters.arena.build --team <name> [--out results/arena/<name>]
+    python -m adapters.arena.build --team <name> [--out results/arena/<name>] [--bot main|<harness opponent>]
 
-Writes <out>/bot.py (one PokerBot subclass wrapping MainBot via ArenaAdapter) and copies the modules it
-imports next to it (core/, bots/main/, adapters/arena/), so `arena pack` stores them inside the .pkl by value.
+Writes <out>/bot.py (one PokerBot subclass wrapping MainBot, or any harness/opponents.py bot, via ArenaAdapter)
+and copies the modules it imports next to it (core/, bots/main/, adapters/arena/, harness opponents), so
+`arena pack` stores them inside the .pkl by value. `--bot <opponent>` turns our test opponents into arena
+opponents for `python -m adapters.arena.gauntlet`.
+Use `--strategy combo --preflop-dir PATH` to combine #32's preflop helpers with MainBot postflop
+(the default `--bot main` is required).
 Then, from a clone of Manchester-AI-Society/poker_bot_infrastructure with its venv (Python 3.14):
 
     python -m arena validate <out>
@@ -27,6 +31,7 @@ FILES = [
     "bots/main/postflop.py", "bots/main/opponent.py", "bots/main/preflop.py",
     "adapters/__init__.py", "adapters/arena/__init__.py", "adapters/arena/translate.py",
 ]
+OPPONENT_FILES = ["harness/__init__.py", "harness/_types.py", "harness/opponents.py"]
 
 PREFLOP_FILES = ("opponent.py", "preflop.py", "ranges.py", "equity_table.py")
 
@@ -36,12 +41,12 @@ from player_sdk.bot_interface import PokerBot
 from player_sdk.models import Response
 
 from adapters.arena.translate import ArenaAdapter
-from bots.main.bot import MainBot
+{import_line}
 
 
 class GuhPokerBot(PokerBot):
     def __init__(self):
-        self._adapter = ArenaAdapter(MainBot(), Response)
+        self._adapter = ArenaAdapter({factory}, Response)
 
     def act(self, game_state):
         return self._adapter.act(game_state)
@@ -59,13 +64,16 @@ def version() -> str:
         return "guh-poker@nogit"
 
 
-def build(team: str, out: Path, strategy: str = "main", preflop_dir: Path | None = None) -> list[str]:
+def build(team: str, out: Path, bot: str = "main", *, strategy: str = "main",
+          preflop_dir: Path | None = None) -> list[str]:
     if not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,31}", team):
         raise SystemExit("team: lowercase letters, digits, '-' and '_', up to 32 chars, starting alphanumeric")
     if strategy not in ("main", "combo"):
         raise ValueError(f"unknown strategy: {strategy}")
     if preflop_dir is not None and strategy != "combo":
         raise ValueError("preflop_dir requires strategy='combo'")
+    if strategy == "combo" and bot != "main":
+        raise ValueError("combo strategy requires bot='main'")
     source = (preflop_dir or REPO / "bots" / "myteam").resolve()
     out = out.resolve()
     # Check dependencies before replacing an existing build. #32 may still live in another checkout.
@@ -79,11 +87,20 @@ def build(team: str, out: Path, strategy: str = "main", preflop_dir: Path | None
     # An output must never contain the repository or the helper source it is about to copy.
     if REPO.is_relative_to(out) or (strategy == "combo" and source.is_relative_to(out)):
         raise ValueError("output would overwrite the repository or preflop source")
+    files = list(FILES)
+    if bot == "main":
+        import_line, factory = "from bots.main.bot import MainBot", "MainBot()"
+    else:
+        from harness.opponents import OPPONENTS
+        if bot not in OPPONENTS:
+            raise SystemExit(f"unknown bot {bot!r}; choose main or one of {sorted(OPPONENTS)}")
+        import_line, factory = "from harness.opponents import OPPONENTS", f"OPPONENTS[{bot!r}]()"
+        files += OPPONENT_FILES
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True, exist_ok=True)
     copied = []
-    for rel in FILES:
+    for rel in files:
         src = REPO / rel
         if not src.exists():
             continue                      # e.g. preflop.py before #11 lands: MainBot falls back
@@ -97,7 +114,8 @@ def build(team: str, out: Path, strategy: str = "main", preflop_dir: Path | None
             copied.append(name)
         shutil.copy2(REPO / "adapters/arena/combo_bot_example.py", out / "bot.py")
     else:
-        (out / "bot.py").write_text(BOT_PY.format(team=team, version=version()))
+        (out / "bot.py").write_text(BOT_PY.format(team=team, version=version(), import_line=import_line,
+                                              factory=factory))
     return copied
 
 
@@ -107,9 +125,10 @@ def main(argv: list[str] | None = None) -> Path:
     ap.add_argument("--out", type=Path, default=None)
     ap.add_argument("--strategy", choices=("main", "combo"), default="main")
     ap.add_argument("--preflop-dir", type=Path, help="#32 helper folder; defaults to bots/myteam (combo only)")
+    ap.add_argument("--bot", default="main", help="main, or a harness/opponents.py name")
     args = ap.parse_args(argv)
     out = (args.out or REPO / "results" / "arena" / args.team).resolve()
-    copied = build(args.team, out, args.strategy, args.preflop_dir)
+    copied = build(args.team, out, args.bot, strategy=args.strategy, preflop_dir=args.preflop_dir)
     print(f"built {out} ({len(copied)} files + bot.py)")
     return out
 
