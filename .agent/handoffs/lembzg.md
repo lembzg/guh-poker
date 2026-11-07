@@ -1,37 +1,40 @@
 # Handoff — lembzg
 
-Updated: 2026-11-06T23:30:00+00:00
-Status: in-review
-Task: #14
-Branch: lembzg/14-import-v0
-Commit: 481ef5b
+Updated: 2026-11-07T00:46:53.681623+00:00
+Status: ready
+Task: #27 Combined prototype integration fixes (PR #34)
+Branch: lembzg/34-combo-fixes
+Commit: 337f7ad Merge gauntlet builder support into combined candidate (#27)
 
 ## Done
-- Imported Quant byte-for-byte into bots/v0/ (bot.py, BOT_README.md, data/preflop.json).
-- Added bots/v0/adapter.py (V0Bot), bots/v0/README.md, tests/bots/v0/.
-- Registered v0 in make_bot and deleted the contract stub in tests/bots/v0/conftest.py.
-- Rebased onto origin/main (43b4fdc). Still stacked on the #4 commit, because #17 isn't merged.
-- Reported harness bb/100 in PR #16 and marked it ready.
+- Resolved concurrent #38 builder conflict, preserving --bot / positional gauntlet API and adding two compatibility tests; final adapter suite: 25 passed.
+- PR #34 integration fix: merged latest main at 8ab7c46 for #19, added --strategy combo / --preflop-dir build, preserved default MainBot build.
+- Combo wrapper records the actual fallback action and keeps the returned action unchanged on bookkeeping errors. Added response-conversion, routing and builder regression tests.
+- docs/ENVIRONMENT.md documents the combined build, dependency on #32, upload-envelope unpacking and evaluation limits.
 
 ## In progress
-- PR #16 waits on #17. Merge #17 first, rebase #16 so its diff shows only #14, then squash-merge it.
+- Implementation and local verification complete. PR #34 remains a draft pending entry selection and tuning.
 
 ## Files touched
-- bots/v0/, tests/bots/v0/, the v0 line in bots/__init__.py
+- adapters/arena/{build,combo_bot_example,translate}.py; tests/adapters/; docs/ENVIRONMENT.md; this handoff.
 
 ## Tests
-- pytest, Python 3.12 with numpy, pytest and eval7: 95 passed, including 20 in tests/bots/v0 against the real core/interface.py.
-- check.sh passes, but only runs static checks. Neither it nor CI runs pytest until #3 lands.
-- Harness, seed 1, duplicate, 100bb, --hands 20000, commit 481ef5b. v0 vs random: +466.33 ± 41.07 bb/100. v0 vs always_call: +255.47 ± 13.88 bb/100. 0 illegal, 0 errors, v0 max 100.35 ms.
-- One-off, not in repo: 3,000 hands on the real Fullhouse engine, 5,918 decisions, 0 mismatches, 0 illegal.
+- Python 3.12 dev venv: python -m pytest -q -> 185 passed after #38 compatibility merge.
+- Python 3.14 without numpy/eval7: adapters + MainBot wiring/fallback/postflop/opponent tests -> 70 passed.
+- ./scripts/check.sh -> OK; git diff --check -> clean.
+- Arena @8b89346: source validate -> 40 hands, zero faults; pack with fresh-process validation -> 519 KB (07d401e467ca).
+- Packed payload only: random seed 101 and starter seed 102, 200 duplicate deals each -> 800 total hands, zero faults, 10.5s / 9.5s aggregate thinking.
 
 ## Bugs / blockers
-- No python command on this laptop and no requirements file yet. Tests ran in a throwaway Python 3.12 venv outside the repo.
+- #32 is still unmerged: use --preflop-dir pointing to its bots/myteam helpers; no tables were changed or bundled into this PR.
+- No tuning or paired improvement evidence added. #35 remains separate. Existing hidden fold / last-hand inference limitations remain.
 
 ## Decisions & dependencies
-- eval7 is needed (listed in PR for #3). CLAUDE.md requires a decision issue for new deps; do this with the post-merge reuse proposal.
+- User asked to fix PR #34. Scope chosen: reproducible integration and reliability, preserving strategy thresholds and draft status.
+- Python 3.14 arena/dev environments and infra remain in /private/tmp/claude-501/-Users-arryl-Desktop-guh-poker/bdb98b8b-e1f1-428f-90b3-812c4dd5d3bb/scratchpad/.
+- Verified artifact and report: /Users/arryl/Documents/Codex/2026-11-07/here-s-what-to-run-overnight/outputs/pr34/.
 
 ## Next steps
-1. Merge #17 (contract PR, approved; needs the human's go-ahead).
-2. Rebase #16 on origin/main, re-run tests, squash-merge.
-3. After merge, open the decision issue on reusing v0 in bots/main, including the eval7 dependency.
+1. Check PR #34 CI on its updated head and inspect final diff.
+2. Select the tournament entry and actual team name; rebuild and pack after any strategy changes.
+3. Run paired tournament-length tuning across diverse opponents, then confirm selected variants with fresh seeds (#33).

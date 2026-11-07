@@ -41,4 +41,39 @@ How each environment field maps to `GameState` / `Action` in `docs/API.md`. Note
 ## Exploitable observations
 Anything about the environment or the likely opponents we could use: deterministic deck seeds, fixed hand counts, time budget slack, opponent tendencies.
 
+## Building the combined candidate (#34)
+
+The default `python -m adapters.arena.build --team NAME` still builds MainBot.
+The gauntlet's `--bot <harness opponent>` and positional `build(team, out, bot)` API are preserved;
+the combined strategy requires the default `--bot main`.
+For #32's table-driven preflop plus MainBot's postflop and opponent model, use:
+
+```bash
+python -m adapters.arena.build --team NAME --strategy combo --preflop-dir /path/to/preflop-checkout/bots/myteam
+# From the infrastructure checkout, using its Python 3.14 environment:
+python -m arena validate /absolute/path/to/guh-poker/results/arena/NAME
+python -m arena pack /absolute/path/to/guh-poker/results/arena/NAME --team NAME --out /path/to/submissions
+python -c 'from pathlib import Path; from arena.package import unpack; unpack(Path("/path/to/submissions/NAME.pkl"), Path("/path/to/packed-check"))'
+python -m arena match /path/to/packed-check call --deals 200 --seed 101
+```
+
+Until #32 merges, `--preflop-dir` points to its checkout; once `bots/myteam` is present locally,
+the flag can be omitted. The builder copies `opponent.py`, `preflop.py`, `ranges.py`, and
+`equity_table.py` into the output alongside the MainBot modules. Missing combined dependencies
+fail before replacing an existing build. No offline generator, numpy or eval7 is required to play.
+`arena match` consumes source or the inner `bot.pkl`; the uploaded `NAME.pkl` is an envelope.
+The unpack step above extracts that payload for a source-independent match. `arena pack` also
+automatically validates the packed payload in a fresh process.
+
+`ArenaAdapter.observe(gs, response)` records a decision made by the external preflop strategy
+without invoking MainBot's preflop strategy. `from_response` converts street raise totals back
+to hand totals; subsequent postflop decisions and completed-hand observations use the same adapter.
+The combined wrapper records safe fallback actions too, and bookkeeping failures do not replace
+an action that has already been recorded. Opponent cards remain unavailable, and hand-end folds
+are inferred with the limitations described above. The final hand has no subsequent callback.
+
+This is an integration candidate with unchanged strategy thresholds. The prototype's single-seed,
+long-match results do not establish a tournament-length improvement. Compare variants on identical
+duplicate deals across independent short matches, and confirm selected parameters on fresh seeds.
+
 ## Open questions
