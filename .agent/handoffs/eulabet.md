@@ -2,35 +2,32 @@
 
 <!-- Only you edit your file. Overwrite (don't append) at each checkpoint. Format: .agent/RECOVERY.md -->
 
-Updated: 2026-11-07T11:37:30+00:00
+Updated: 2026-11-07T15:07:29+00:00
 Status: waiting
-Task: Entry v2 packed (entry rate 0.80); human re-uploads. PR #54 awaits lembzg.
+Task: Entry v3 packed (slower-learning gates for 30/60-deal format). Not uploaded (human's call). PR #54 awaits lembzg.
 Branch: eulabet/final-allin-fix
-Commit: cadc32f
+Commit: 37f190c
 
 ## Done
-- v2 entry: results/submission/gemiclaudex.pkl sha256 ac7515a0066df0bfb92d03dc73985a49b4c4399144d95b589230d137717aac81 from eulabet/final-allin-fix @1876919 (HIDDEN_SB_ENTRY 0.80: +1.06 vs @shove, mean +0.08, 0 faults). v1 kept as gemiclaudex-v1-0.45.pkl.bak.
-- BB-defence idea dropped: BB folds 32-33% vs 2.5x opens (≈equilibrium); loss is OOP postflop in called pots.
-- Entry: results/submission/gemiclaudex.pkl (545 KB, sha256 a2f5d8ed2bd57e338f44f6971b967b3cd7b60463427dddf308e210af6f3a0258), packed by organisers' arena pack from eulabet/final-allin-fix @6678564 = lembzg final (1177bfe) + all-in censoring fix. Team name gemiclaudex (human chose GemiClaudEx; arena requires lowercase).
-- Fix: bots/main/allin.py scales hidden-fold open-jam evidence by 0.45 instead of zeroing. A/B seeds 41+43, 16 opponents, 0 faults: vs @shove +2.36, mean +0.09, no regression. PR #54 ready, reviewer lembzg.
-- Earlier today: #48 equity speed, #51 archetypes, #52 MDF dial (off), #53 per-street bluff (rejected, data on issue). Overnight sim (lembzg, 11.8M hands): keep defaults.
-- Codex rivals (4) tested: combined beats balanced/cautious, ~even vs aggressive/mathematical across seeds.
+- RULE CHANGE (human, 2026-11-07): round 1 = 30 deals per pairing, finals = 60. Bank = 0.2 s × deals per half (6 s / 12 s); bot startup (spawn + unpickle) counts toward the first move's think time. Measured ~0.7 s per 30-deal half, 0 faults.
+- v3 entry: results/submission/gemiclaudex.pkl sha256 5343f32633896e7408b51b7429238d36aadeb36171a77de58fed711fec645dcf (arena checksum 480495adaaad) from eulabet/final-allin-fix @37f190c. Change: postflop Beta prior 5→7, gates 1.5x (station/folder 15, sticky 30, hf 22, auto 37, BARREL_MIN_OBS 22). A/B fresh paired seeds, 16 opps: 30 deals +0.09±0.03 (60 seeds), 60 deals +0.03±0.05 (40 seeds). Faster gates (0.6x) −0.09±0.06, rejected. v2 kept as gemiclaudex-v2-0.80.pkl.bak, v1 as gemiclaudex-v1-0.45.pkl.bak.
+- Short-match baseline (v2, 30 deals): +2.07 bb/hand mean; positive vs every external opponent; only loss vs our own old combo build.
+- OOP dials (A realization 0.90, B check-raise) A/B: no gain, kept off on branch eulabet/oop-play (not merged).
+- v2: HIDDEN_SB_ENTRY 0.80 (+1.06 vs @shove, no regression). Overnight sim (lembzg): keep defaults.
 
 ## In progress
-- Human uploads gemiclaudex.pkl via the submission form before 18:00.
+- Human decides when to upload gemiclaudex.pkl (deadline 18:00).
 
 ## Files touched
-- bots/main/allin.py, tests/bots/main/test_allin.py (this branch)
+- bots/main/allin.py, bots/main/postflop.py, tests/bots/main/test_allin.py, tests/bots/main/test_postflop.py (this branch)
 
 ## Tests
-- PATH=.venv/bin:$PATH ./scripts/check.sh → 227 passed, 2 skipped (lembzg's check.sh uses system python3; use venv).
-- Sanity from packed folder (300 deals seed 77): starter +0.51, shove +3.22, random +4.65, 0 faults.
-
-## Bugs / blockers
-- Optional: BB preflop defence vs wide raisers (lembzg's preflop) — data on #45.
+- PATH=.venv/bin:$PATH ./scripts/check.sh → 227 passed, 2 skipped.
+- Short-match tooling: scratchpad diag/short.sh <botdir> <deals> <seed_from> <seed_to> <out>; diag/agg.py a.txt b.txt (paired diff). Gauntlet needs a source folder (bot.py), not a pkl.
 
 ## Decisions & dependencies
-- Entry = lembzg final + all-in fix. Re-upload only for a change that wins on fresh deals (2 seeds).
+- Entry = lembzg final + all-in fix + slower gates. Re-pack only for a change that wins on fresh paired seeds.
 
 ## Next steps
-1. Confirm human uploaded; if lembzg merges #54/#45 later and changes anything, rebuild: python -m adapters.arena.build --team gemiclaudex --strategy combo --preflop-dir bots/myteam, then arena validate + pack.
+1. If lembzg merges #54/#45 and changes anything, rebuild: python -m adapters.arena.build --team gemiclaudex --strategy combo --preflop-dir bots/myteam --out <dir>, then arena validate + pack.
+2. Optional C (preflop 3-bet-or-fold) is lembzg's area; untested.
