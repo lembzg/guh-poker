@@ -41,4 +41,98 @@ How each environment field maps to `GameState` / `Action` in `docs/API.md`. Note
 ## Exploitable observations
 Anything about the environment or the likely opponents we could use: deterministic deck seeds, fixed hand counts, time budget slack, opponent tendencies.
 
+## Building the combined candidate (#34)
+
+The default `python -m adapters.arena.build --team NAME` still builds MainBot.
+The gauntlet's `--bot <harness opponent>` and positional `build(team, out, bot)` API are preserved;
+the combined strategy requires the default `--bot main`.
+For #32's table-driven preflop plus MainBot's postflop and opponent model, use:
+
+```bash
+python -m adapters.arena.build --team NAME --strategy combo --preflop-dir /path/to/preflop-checkout/bots/myteam
+# From the infrastructure checkout, using its Python 3.14 environment:
+python -m arena validate /absolute/path/to/guh-poker/results/arena/NAME
+python -m arena pack /absolute/path/to/guh-poker/results/arena/NAME --team NAME --out /path/to/submissions
+python -c 'from pathlib import Path; from arena.package import unpack; unpack(Path("/path/to/submissions/NAME.pkl"), Path("/path/to/packed-check"))'
+python -m arena match /path/to/packed-check call --deals 200 --seed 101
+```
+
+Until #32 merges, `--preflop-dir` points to its checkout; once `bots/myteam` is present locally,
+the flag can be omitted. The builder copies `opponent.py`, `preflop.py`, `ranges.py`, and
+`equity_table.py` into the output alongside the MainBot modules. Missing combined dependencies
+fail before replacing an existing build. No offline generator, numpy or eval7 is required to play.
+`arena match` consumes source or the inner `bot.pkl`; the uploaded `NAME.pkl` is an envelope.
+The unpack step above extracts that payload for a source-independent match. `arena pack` also
+automatically validates the packed payload in a fresh process.
+
+`ArenaAdapter.observe(gs, response)` records a decision made by the external preflop strategy
+without invoking MainBot's preflop strategy. `from_response` converts street raise totals back
+to hand totals; subsequent postflop decisions and completed-hand observations use the same adapter.
+The combined wrapper records safe fallback actions too, and bookkeeping failures do not replace
+an action that has already been recorded. Opponent cards remain unavailable, and hand-end folds
+are inferred with the limitations described above. The final hand has no subsequent callback.
+
+This is an integration candidate with unchanged strategy thresholds. The prototype's single-seed,
+long-match results do not establish a tournament-length improvement. Compare variants on identical
+duplicate deals across independent short matches, and confirm selected parameters on fresh seeds.
+
 ## Open questions
+
+## All-in accounting (#39)
+
+`opp_starting_stack` now carries opponent remaining chips plus their hand-total
+commitment, separately from our `starting_stack`. Terminal calls exclude unmatched
+excess. A covering raise is terminal even when we retain chips, so no opponent
+fold is inferred from missing subsequent turns. Arena observation is partial:
+SB folds before our first decision remain invisible; the all-in learner keeps
+its open-jam prior in that context rather than learning from selected raises.
+The combined candidate sends terminal preflop calls through MainBot's guarded
+equity path. Research, formulas, prior choices and limitations: [ALL_IN.md](ALL_IN.md).
+
+Verification of implementation `b2fef33` on organisers `8b89346`, Python 3.14
+without numpy/eval7: standalone and combo sources each validate for 40 hands
+with zero faults; both packages pass fresh-process validation (300KB/536KB).
+Unpacked payloads against @shove, 200 duplicate deals each: main seed 404,
++0.310 bb/hand (95% CI -3.799..+4.419), 7.7s aggregate thinking; combo seed 505,
++4.034 bb/hand (95% CI +0.311..+7.756), 6.2s thinking. Both have zero faults.
+These smoke runs verify packed legality and terminal routing; they are not
+before/after improvement estimates. Combo helpers are from #32 at c457065a.
+
+## Final combined candidate (#44)
+
+Branch `lembzg/44-final-combined` integrates #32 preflop helpers, #34 combined
+routing, #41 opponent-stack contract, #43 all-in corrections, #42 research
+postflop/hidden-SB-fold fixes, and #36 requirements/test setup. The helper tables
+are now tracked in this checkout; no separate preflop checkout is needed.
+
+```bash
+python -m adapters.arena.build --team final-combined --strategy combo --out results/arena/final-combined
+# From the organisers' infrastructure checkout:
+python -m arena validate /absolute/path/to/guh-poker/results/arena/final-combined
+python -m arena pack /absolute/path/to/guh-poker/results/arena/final-combined --team final-combined --out /path/to/submissions
+```
+
+Use `--strategy combo` explicitly. Default `main` still uses the fallback preflop
+module because table-driven arena preflop speaks the organisers' SDK directly.
+The standalone `bots/myteam` bot retains its old postflop placeholder; it is not
+the final combined entry. Final preflop terminal calls route through MainBot's
+all-in policy; ordinary preflop decisions use #32, and postflop uses #42 with
+#43's effective-stack accounting. Bluff confidence is checked against the actual
+legal effective bet, including minimum-raise and short-opponent constraints.
+
+Development checks: install `requirements.txt` in a virtual environment, then
+run `./scripts/check.sh`. Real-engine preflop tests require the infrastructure
+checkout and its `cloudpickle` dependency:
+`ARENA_ROOT=/path/to/poker_bot_infrastructure python -m pytest -q tests/test_preflop.py`.
+A plain development run skips that module if `ARENA_ROOT` is unset.
+The combined candidate's smoke verification is recorded in
+[integration-change-ledger.md](integration-change-ledger.md). Those checks verify
+integration/legality, not tournament superiority; the separate final-test work
+must compare the exact combined artifact on held-out deals before entry selection.
+
+Full audit corrections (#44): the combined preflop tracker now treats a raise
+covering the shorter opponent as terminal, avoiding a false fold observation
+when the opponent calls off. Adapter hand tracking also separates consecutive
+deals with identical hole cards and equal-length history, while repeated
+bookkeeping on the same SDK request remains idempotent. The organiser creates
+a fresh state per turn and records each action before the next turn.

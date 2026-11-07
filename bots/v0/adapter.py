@@ -18,6 +18,9 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
+from core.allin import opponent_start, terminal_call
+from bots.main.allin import JamModel, all_in_call_action
+from bots.main.opponent import OpponentModel
 from core.interface import Action, GameState, HandResult, clamp_to_legal
 
 _BOT_FILE = Path(__file__).with_name("bot.py")
@@ -63,7 +66,7 @@ def _action_log(state: GameState, my_seat: int, opp_seat: int) -> list[dict[str,
     ]
     for record in state.history:
         # Quant's short-stack charts need to know whether the raise it faces is a shove.
-        is_shove = record.kind == "raise" and (record.raise_to or 0) >= state.starting_stack
+        is_shove = record.kind == "raise" and (record.raise_to or 0) >= (state.starting_stack if record.actor == "me" else opponent_start(state))
         log.append({
             "seat": my_seat if record.actor == "me" else opp_seat,
             "action": "all_in" if is_shove else record.kind,
@@ -92,7 +95,7 @@ def to_quant_state(state: GameState, match_log: list[dict[str, Any]]) -> dict[st
     my_bet = state.my_committed - base
     opp_bet = state.opp_committed - base
     my_stack = state.starting_stack - state.my_committed
-    opp_stack = state.starting_stack - state.opp_committed
+    opp_stack = opponent_start(state) - state.opp_committed
     current_bet = max(my_bet, opp_bet)
     # With no raise available, Quant's raise comes back through clamp_to_legal as a check or call.
     min_raise_to = state.legal.min_raise_to
@@ -144,14 +147,26 @@ class V0Bot:
 
     def _reset(self) -> None:
         self._quant = _load_quant(self._seed)
+        self.jam_model = JamModel()
+        self._terminal_model = OpponentModel()
         self._match_log: list[dict[str, Any]] = []
         self._hand_num = 0  # our own count, because hand_id may repeat in duplicate deals
 
     def new_match(self, match_id: str, opponent: str | None) -> None:
         self._reset()
 
+    def set_partial_observations(self) -> None:
+        self.jam_model.complete_hands = False
+
     def act(self, state: GameState) -> Action:
         try:
+            self._terminal_model.small_blind = state.small_blind
+            self._terminal_model.big_blind = state.big_blind
+            self.jam_model.observe(state)
+            if terminal_call(state):
+                rng = (self.jam_model.range(state) if state.street == 1
+                       else self._terminal_model.range_estimate(state))
+                return all_in_call_action(state, rng)
             self._quant._BB = state.big_blind
             current = _match_log_entries(state.history, self._hand_num, state.is_button)
             reply = self._quant.decide(to_quant_state(state, self._match_log + current))
@@ -161,6 +176,8 @@ class V0Bot:
         return clamp_to_legal(action, state.legal)
 
     def hand_over(self, result: HandResult) -> None:
+        self.jam_model.finish_hand(result)
+        self._terminal_model.observe_hand(result)
         try:
             entries = _match_log_entries(result.history, self._hand_num, result.was_button)
             self._match_log = (self._match_log + entries)[-_MATCH_LOG_MAX_ENTRIES:]

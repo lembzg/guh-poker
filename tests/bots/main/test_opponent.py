@@ -201,3 +201,34 @@ def test_range_estimate_speed():
     for _ in range(20):
         m.range_estimate(st)
     assert (time.perf_counter() - t) / 20 * 1000 < 25
+
+
+def test_hidden_sb_folds_are_corrected():
+    """#35: as the arena's big blind we only see SB hands the opponent entered. A nit (fold 80, raise 15,
+    limp 5) then looks like it plays every hand; the model must not read it as a maniac."""
+    m = OpponentModel()
+    for i in range(100):
+        if i % 4 == 3:   # 25% of the visible hands are limps, 75% raises (15 / 20 of the entered hands)
+            hist = [R(1, "opp", "call", None), R(1, "me", "check", None)]
+        else:
+            hist = [R(1, "opp", "raise", 60), R(1, "me", "fold", None)]
+        m.observe_hand(hand(hist, was_button=False))
+    assert m.sb_folds_hidden()
+    s = m.stats()
+    assert s.vpip == pytest.approx(0.45) and s.pfr < 0.45 and classify(s) != "maniac"
+    # A visible SB fold, or any hand with them in the BB, means nothing is censored.
+    m.observe_hand(hand([R(1, "opp", "fold", None)], was_button=False))
+    assert not m.sb_folds_hidden()
+
+
+def test_counts_and_bet_frequency():
+    m = OpponentModel()
+    for _ in range(12):   # we check the flop, they bet; we call; turn they check
+        m.observe_hand(hand([R(1, "me", "call", None), R(1, "opp", "check", None),
+                             R(2, "opp", "raise", 4), R(2, "me", "call", None),
+                             R(3, "opp", "check", None), R(3, "me", "raise", 8), R(3, "opp", "fold", None)],
+                            board=("As", "7d", "2c", "9h")))
+    c = m.counts()
+    assert c["bet_when_checked_to"] == (12, 24) and c["fold_to_bet"] == (12, 12)
+    assert c["fold_to_bet_by_street"][3] == (12, 12) and c["fold_to_bet_by_street"][2] == (0, 0)
+    assert m.bet_frequency() == pytest.approx(17 / 34)

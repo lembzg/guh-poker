@@ -1,37 +1,35 @@
 # Handoff — lembzg
 
-Updated: 2026-11-06T23:30:00+00:00
-Status: in-review
-Task: #14
-Branch: lembzg/14-import-v0
-Commit: 481ef5b
+Updated: 2026-11-07T01:56:46.567323+00:00
+Status: needs_attention
+Task: #44 Full audit of final combined bot (PR #45)
+Branch: lembzg/44-final-combined
+Commit: 346d678 Fix opponent and hand tracking found in combined audit (#44)
 
 ## Done
-- Imported Quant byte-for-byte into bots/v0/ (bot.py, BOT_README.md, data/preflop.json).
-- Added bots/v0/adapter.py (V0Bot), bots/v0/README.md, tests/bots/v0/.
-- Registered v0 in make_bot and deleted the contract stub in tests/bots/v0/conftest.py.
-- Rebased onto origin/main (43b4fdc). Still stacked on the #4 commit, because #17 isn't merged.
-- Reported harness bb/100 in PR #16 and marked it ready.
-
-## In progress
-- PR #16 waits on #17. Merge #17 first, rebase #16 so its diff shows only #14, then squash-merge it.
-
-## Files touched
-- bots/v0/, tests/bots/v0/, the v0 line in bots/__init__.py
+- Combined #32/#34/#41/#43/#42/#36, all six exact heads retained.
+- Full audit fixed two reproduced tracker bugs: false folds after covering a short opponent, and consecutive identical-hole-card hand detection. Three new regressions pass; duplicate same-request bookkeeping stays idempotent.
+- Rebuilt exact corrected source and packed envelope from 346d678; outputs in Documents/Codex/2026-11-07/app/outputs, including FINAL-COMBINED-AUDIT.md, manifest, evidence and final-test handoff.
 
 ## Tests
-- pytest, Python 3.12 with numpy, pytest and eval7: 95 passed, including 20 in tests/bots/v0 against the real core/interface.py.
-- check.sh passes, but only runs static checks. Neither it nor CI runs pytest until #3 lands.
-- Harness, seed 1, duplicate, 100bb, --hands 20000, commit 481ef5b. v0 vs random: +466.33 ± 41.07 bb/100. v0 vs always_call: +255.47 ± 13.88 bb/100. 0 illegal, 0 errors, v0 max 100.35 ms.
-- One-off, not in repo: 3,000 hands on the real Fullhouse engine, 5,918 decisions, 0 mismatches, 0 illegal.
+- Full quality gate WITH ARENA_ROOT: 286 passed, no skips, 7 legacy eval7 warnings; check OK.
+- Clean git archive under Python 3.14 without numpy/eval7: 251 passed, 1 legacy skip; two offline numpy test modules excluded (covered above).
+- Independent evaluator comparisons: 60000 five/six/seven-card rankings agree with eval7.
+- Corrected source: 8800 real-engine hands, 11 opponent styles, two seeds, zero faults.
+- Instrumented corrected source: 1000 hands/2012 decisions, both seats/unequal stacks, no faults/internal errors/fallbacks; p50 10.158ms, p99 22.640ms, max 27.300ms.
+- Exact corrected package: source/fresh-process packed validation pass; 1200 unpacked hands vs random/shove/starter, zero faults.
 
 ## Bugs / blockers
-- No python command on this laptop and no requirements file yet. Tests ran in a throwaway Python 3.12 venv outside the repo.
+- No remaining observed local correctness failure. Timing tests are sensitive: local concurrent fallback timing failed, serial full gate passed unchanged. GitHub 346d678 equity timing benchmark failed 20.705ms vs 20ms; same-revision rerun also failed 20.654ms vs 20ms. This remains an open performance-gate finding; PR is not fully green.
+- Partial observations, heuristic ranges and stochastic choices remain; no tournament-superiority claim.
+- Build MUST use --strategy combo. Main default has fallback preflop; standalone bots/myteam retains placeholder postflop.
 
 ## Decisions & dependencies
-- eval7 is needed (listed in PR for #3). CLAUDE.md requires a decision issue for new deps; do this with the post-merge reuse proposal.
+- No main merge/upload. Separate overnight/final-test checkout untouched. No strategy thresholds or benchmark limits changed.
+- Runtime remains stdlib-only; dev cloudpickle installed for existing organiser tests, no project dependency change.
+- PR #45 remains draft for final comparisons/shared-contract review.
 
 ## Next steps
-1. Merge #17 (contract PR, approved; needs the human's go-ahead).
-2. Rebase #16 on origin/main, re-run tests, squash-merge.
-3. After merge, open the decision issue on reusing v0 in bots/main, including the eval7 dependency.
+1. Resolve repeated GitHub equity benchmark failure (20.65–20.71ms vs 20ms) before marking PR ready; do not weaken threshold silently.
+2. Use exact corrected 346d678 source/package for held-out final comparisons before entry selection.
+3. Coordinate shared-contract review/main merge separately.

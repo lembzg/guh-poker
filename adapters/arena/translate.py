@@ -17,7 +17,8 @@ No imports from `player_sdk` here: the `Response` class is passed in, so this fi
 """
 from __future__ import annotations
 
-from core.interface import Action, ActionRecord, GameState, HandResult, LegalActions
+from core.allin import opponent_start
+from core.interface import Action, ActionRecord, GameState, HandResult, LegalActions, clamp_to_legal
 
 STREETS = {"preflop": 1, "flop": 2, "turn": 3, "river": 4}
 BLINDS = ("post_small_blind", "post_big_blind")
@@ -92,6 +93,7 @@ def to_game_state(gs, hand_id: int) -> GameState:
         small_blind=int(gs.small_blind or 10),
         big_blind=int(gs.big_blind or 20),
         starting_stack=my_stack + my_committed,
+        opp_starting_stack=int(gs.stack_sizes[opp]) + opp_committed,
         my_committed=my_committed,
         opp_committed=opp_committed,
         history=tuple(records),
@@ -118,6 +120,20 @@ def to_response(action: Action, gs, state: GameState, response_cls):
     return response_cls.call()            # call, or check when nothing is owed
 
 
+def from_response(resp, gs, state: GameState) -> Action:
+    """Their Response (street totals) -> our Action (hand totals), for decisions made by another module."""
+    kind = getattr(resp, "action_type", None)
+    call = int(gs.call_amount or 0)
+    if kind == "fold":
+        return Action("fold") if call > 0 else Action("check")
+    if kind in ("raise", "all_in") and state.legal.max_raise_to is not None:
+        if kind == "all_in" or getattr(resp, "amount", None) is None:
+            return Action("raise", state.legal.max_raise_to)
+        prior_me = state.my_committed - int(gs.current_bets[gs.my_index])
+        return clamp_to_legal(Action("raise", prior_me + int(resp.amount)), state.legal)
+    return Action("call") if call > 0 else Action("check")
+
+
 def safe_response(gs, response_cls):
     return response_cls.call() if int(getattr(gs, "call_amount", 0) or 0) == 0 else response_cls.fold()
 
@@ -130,12 +146,16 @@ class ArenaAdapter:
         self.response_cls = response_cls
         self.hand_id = -1
         self._last_hole = None
+        self._last_request = None
         self._last_len = 0
         self._last_state: GameState | None = None
         self._last_action: Action | None = None
         self.errors = 0
         try:
             bot.new_match("arena", opponent)
+            partial = getattr(bot, "set_partial_observations", None)
+            if partial is not None:
+                partial()
         except Exception:
             self.errors += 1
 
@@ -150,12 +170,33 @@ class ArenaAdapter:
             self.errors += 1
             return safe_response(gs, self.response_cls)
 
+    def observe(self, gs, response) -> None:
+        """Record a decision another module made (e.g. a separate preflop strategy), so hand tracking and
+        the wrapped bot's opponent model still see the whole hand."""
+        try:
+            self._track_hand(gs)
+            state = to_game_state(gs, self.hand_id)
+            observer = getattr(self.bot, "observe_state", None)
+            if observer is not None:
+                observer(state)
+            self._last_state, self._last_action = state, from_response(response, gs, state)
+        except Exception:
+            self.errors += 1
+
     # ------------------------------------------------------------- hand tracking
 
     def _track_hand(self, gs) -> None:
+        # A combined terminal preflop decision may call act() then observe()
+        # with the same request. Do not count that bookkeeping as another turn.
+        if gs is self._last_request:
+            return
+        self._last_request = gs
         hole = tuple(gs.hole_cards)
         n = len(gs.action_history)
-        if hole != self._last_hole or n < self._last_len:
+        # The SDK creates a fresh object per turn; within a hand the preceding
+        # action must grow history. Equal length can be a new deal with the
+        # same hole cards, even though no hand ID is exposed by the arena.
+        if hole != self._last_hole or n <= self._last_len:
             self._finish_hand()
             self.hand_id += 1
         self._last_hole, self._last_len = hole, n
@@ -174,7 +215,7 @@ class ArenaAdapter:
             raise_to = action.raise_to if kind == "raise" else None
             history.append(ActionRecord(state.street, "me", kind, raise_to))
             all_in = kind == "raise" and state.legal.max_raise_to is not None and raise_to is not None \
-                and raise_to >= state.legal.max_raise_to
+                and raise_to >= min(state.legal.max_raise_to, opponent_start(state))
             if kind == "raise" and not all_in and state.street < 4:
                 history.append(ActionRecord(state.street, "opp", "fold", None))   # no further turn: they folded
         try:

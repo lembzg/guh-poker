@@ -125,3 +125,11 @@ def test_draws_count_as_strength():
     combos = np.array([[I["Ah"], I["5h"]], [I["4d"], I["3s"]], [I["Kd"], I["Qc"]]])
     s = _strength_vs_random(combos, board, 400, np.random.default_rng(1))
     assert s[2] > s[0] > s[1] and s[0] > 0.5        # nut flush draw beats air, below top pair
+
+
+def test_short_allin_call_excludes_opponent_uncallable_excess():
+    # Hero has 10 in and 10 behind; villain has 100 in. 80 must be returned.
+    args = dict(hole=('As','Ah'), board=('2c','3d','7h','8s','Jc'), pot=110,
+                to_call=90, my_behind=10, opp_behind=100, opp_range={('Ks','Kh'):1})
+    call = next(a for a in score_actions(**args) if a.kind == 'call')
+    assert call.add == 10 and call.ev == 30

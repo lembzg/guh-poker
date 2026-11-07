@@ -105,3 +105,13 @@ From reading the code. None of these has been measured heads-up yet.
 - **Tuned for a different field.** Its thresholds and the prior behind the opponent labels came from a 6-max hackathon field described as loose-passive and over-folding.
 - **Limited opponent reads.** It has no street information or showdown cards, so it can't use `HandResult.opp_hole_cards` or tell a flop bet from a river bet.
 - **Ignores `time_left_ms`.** It always uses its fixed 1.2 s ceiling. Real decisions take far less, but a shorter tournament clock would need a change.
+
+### Terminal-call override (#39)
+
+The adapter evaluates calls that end betting by equity versus a weighted range
+and the contestable final pot before Quant's ordinary charts/heuristics. Actual
+opponent starting stacks are supported. This includes deep shoves and covering
+raises; the original chart source remains unchanged. Preflop frequencies are
+learned by context, with explicit priors and partial-arena-data limits described
+in [docs/ALL_IN.md](../../docs/ALL_IN.md). Postflop terminal equity uses the
+existing pure-Python opponent model; ordinary v0 postflop still uses eval7.

@@ -91,6 +91,7 @@ def test_short_stack_jam_is_a_raise_to_max():
 
 
 def test_raise_to_is_total_for_the_hand_not_for_the_street():
+    pytest.importorskip("eval7")  # without it, v0 checks instead of raising
     # Quant bets the nut flush into 12 chips: a bet this street must sit on top of the 6 already in.
     action = V0Bot(seed=1).act(STATES["flop_checked_to"])
     assert action.kind == "raise" and action.raise_to > 6 + 2
@@ -125,7 +126,9 @@ def test_broken_state_still_acts_legally():
 def test_decide_crash_falls_back_to_legal_action(monkeypatch):
     bot = V0Bot(seed=1)
     monkeypatch.setattr(bot._quant, "decide", lambda _: 1 / 0)
-    assert bot.act(STATES["facing_shove"]) == Action("fold")
+    # Terminal calls are handled independently before Quant; its failure cannot fold AA.
+    assert bot.act(STATES["facing_shove"]) == Action("call")
+    assert bot.act(STATES["bb_vs_open"]) == Action("fold")
     assert bot.act(STATES["river_no_raise_allowed"]) == Action("check")
 
 

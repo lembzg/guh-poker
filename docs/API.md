@@ -49,6 +49,7 @@ class GameState:
     history: tuple[ActionRecord, ...]           # whole hand so far, blinds excluded
     legal: LegalActions
     time_left_ms: int | None = None             # if the environment exposes a clock
+    opp_starting_stack: int | None = None       # actual opponent hand-start stack; None assumes starting_stack
 
 @dataclass(frozen=True)
 class Action:
@@ -108,7 +109,9 @@ Performance target: `equity(..., samples=2000)` under 20 ms on a laptop.
 def preflop_action(state: GameState, opp: OpponentStats) -> Action: ...
 
 # postflop.py (#12)
-def postflop_action(state: GameState, opp: OpponentStats, opp_range: Range | None) -> Action: ...
+def postflop_action(state: GameState, opp: OpponentStats, opp_range: Range | None,
+                    time_budget_ms: float = 60, opp_counts: dict | None = None) -> Action: ...
+    # opp_counts = OpponentModel.counts(); MainBot passes the optional kwargs only if accepted
 
 # opponent.py (#13)
 class OpponentModel:
@@ -117,6 +120,8 @@ class OpponentModel:
     def stats(self) -> OpponentStats: ...
     def range_estimate(self, state: GameState) -> Range | None: ...   # opponent's likely holdings now; None = unknown
     def bluff_rate(self) -> float | None: ...                    # share of their big (>= 2/3 pot) postflop bets shown down as bluffs
+    def counts(self) -> dict: ...      # raw (hits, trials): fold_to_bet, fold_to_bet_by_street{2,3,4}, bet_when_checked_to
+    def bet_frequency(self) -> float | None: ...   # posterior mean of betting when checked to; None < 10 chances
 def classify(stats: OpponentStats) -> str: ...                   # "station" | "maniac" | "nit" | "tag" | "unknown"
 
 # fallback.py (#5)
@@ -137,3 +142,12 @@ It appends one JSON object per match to `results/<date>.jsonl` (gitignored) and 
  "b_ms_avg": 0.1, "b_ms_max": 2, "illegal_a": 0, "illegal_b": 0, "errors_a": 0, "errors_b": 0}
 ```
 The harness also exposes `play_match(bot_a, bot_b, hands, seed, duplicate, stack, bb) -> dict` (that same dict) for use in tests and tuning scripts.
+
+### All-in stack metadata (#39)
+
+`starting_stack` is our hand-start stack. Producers with both stacks populate
+`opp_starting_stack`; legacy callers may omit it and consumers then assume equal
+starting stacks. Both commitments remain hand totals. An opponent can be all-in
+while we retain chips; lack of a legal raise alone does not establish an all-in.
+For a short call, exclude the opponent's unmatchable excess from the contestable
+pot. This is an additive contract extension; existing positional fields stay fixed.

@@ -27,6 +27,10 @@ SHRINK_K = 20.0       # pseudo-observations pulling each rate toward its prior (
 MIN_SAMPLES = 12      # opportunities before a stat stops being None (v0: _MIN_OBS)
 BIG_BET_FRAC = 0.66   # a postflop bet/raise at least this share of the pot counts as "big"
 BLUFF_MIN_SAMPLES = 3
+# Arena (#35): we're the big blind for a whole half and never see the hands where the opponent folds its small
+# blind, so their observed VPIP as SB is ~1. When that censoring is detected, assume this entry rate instead.
+HIDDEN_SB_VPIP_PRIOR = 0.45
+CENSOR_MIN_HANDS = 10
 
 _ALL_COMBOS = [(a, b) for a in range(52) for b in range(a)]   # 1326 combos, higher card index first
 MAX_AGGRESSION = 10.0  # reported when they bet/raise but never call
@@ -133,6 +137,9 @@ class OpponentModel:
         self._calls = 0
         self._bet_fracs: list[float] = []
         self._big_shown = _Rate()
+        self._fb_street = {2: _Rate(), 3: _Rate(), 4: _Rate()}   # folds to our bets, by street
+        self._checked_to = _Rate()                               # they bet when not facing a bet (postflop)
+        self._sb_seen = self._sb_fold = self._bb_seen = 0       # preflop decisions by their seat
 
     # ------------------------------------------------------------- learning
 
@@ -150,6 +157,11 @@ class OpponentModel:
         opp_pre = [a for a in pre if a.actor == "opp"]
 
         if opp_pre:   # they had a preflop decision (not a walk)
+            if result.was_button:
+                self._bb_seen += 1
+            else:
+                self._sb_seen += 1
+                self._sb_fold += opp_pre[0].kind == "fold"
             self._vpip.add(any(a.kind in ("call", "raise") for a in opp_pre))
             self._pfr.add(any(a.kind == "raise" for a in opp_pre))
             for a in opp_pre:   # first time they face exactly one raise, made by us
@@ -174,6 +186,9 @@ class OpponentModel:
                 continue
             if a.facing:
                 self._fb.add(a.kind == "fold")
+                self._fb_street[a.street].add(a.kind == "fold")
+            elif a.kind in ("check", "raise"):
+                self._checked_to.add(a.kind == "raise")
             if a.kind == "raise":
                 self._aggr += 1
                 if a.bet_frac is not None:
@@ -208,10 +223,17 @@ class OpponentModel:
         fr = self._bet_fracs
         kf = k / 4   # bet sizes are less noisy than yes/no frequencies: lighter shrinkage
         avg_frac = (sum(fr) + kf * PRIOR["avg_bet_frac"]) / (len(fr) + kf) if len(fr) >= m else None
+        vpip = self._vpip.value(PRIOR["vpip"], k, m)
+        pfr = self._pfr.value(PRIOR["pfr"], k, m)
+        if self.sb_folds_hidden() and self._vpip.n:
+            # Only hands they entered are visible: raises / entered hands is still informative, entry rate isn't.
+            raise_given_entry = (self._pfr.hits + k * PRIOR["pfr"] / PRIOR["vpip"]) / (self._vpip.hits + k)
+            vpip = HIDDEN_SB_VPIP_PRIOR
+            pfr = min(vpip, raise_given_entry * vpip)
         return OpponentStats(
             hands=self.hands,
-            vpip=self._vpip.value(PRIOR["vpip"], k, m),
-            pfr=self._pfr.value(PRIOR["pfr"], k, m),
+            vpip=vpip,
+            pfr=pfr,
             three_bet=self._3b.value(PRIOR["three_bet"], k, m),
             fold_to_cbet=self._fcb.value(PRIOR["fold_to_cbet"], k, m),
             fold_to_bet=self._fb.value(PRIOR["fold_to_bet"], k, m),
@@ -219,6 +241,24 @@ class OpponentModel:
             wtsd=self._wtsd.value(PRIOR["wtsd"], k, m),
             avg_bet_frac=avg_frac,
         )
+
+    def bet_frequency(self) -> float | None:
+        """Posterior mean of how often they bet when checked to (Beta(5,5) prior); None below 10 chances."""
+        b, n = self._checked_to.hits, self._checked_to.n
+        return (b + 5) / (n + 10) if n >= 10 else None
+
+    def sb_folds_hidden(self) -> bool:
+        """True when we look censored as in the arena's BB half: many SB hands seen, never an SB fold,
+        and no hands with them in the big blind."""
+        return self._sb_seen >= CENSOR_MIN_HANDS and self._sb_fold == 0 and self._bb_seen == 0
+
+    def counts(self) -> dict:
+        """Raw counts for confidence-gated decisions (#40): (successes, trials)."""
+        return {
+            "fold_to_bet": (self._fb.hits, self._fb.n),
+            "fold_to_bet_by_street": {s: (r.hits, r.n) for s, r in self._fb_street.items()},
+            "bet_when_checked_to": (self._checked_to.hits, self._checked_to.n),
+        }
 
     def bluff_rate(self) -> float | None:
         """Share of their big postflop bets (>= 2/3 pot) that were bluffs when shown down; None if too few."""
@@ -255,7 +295,8 @@ class OpponentModel:
             vals = [_rank_ints([a, b] + board) for a, b in combos]
             for a in street_opp:
                 pct = _strength_percentile(vals, weights)
-                weights = [w * m for w, m in zip(weights, _postflop_multiplier(a, pct, get, self.bluff_rate()))]
+                mult = _postflop_multiplier(a, pct, get, self.bluff_rate(), self.bet_frequency())
+                weights = [w * m for w, m in zip(weights, mult)]
 
         out = {(_IDX_TO_CARD[a], _IDX_TO_CARD[b]): w for (a, b), w in zip(combos, weights) if w > 1e-9}
         return out or None
@@ -302,12 +343,17 @@ def _strength_percentile(vals: list[int], weights: list[float]) -> list[float]:
     return out
 
 
-def _postflop_multiplier(a: _Act, pct: list[float], get, bluff_rate: float | None) -> list[float]:
+def _postflop_multiplier(a: _Act, pct: list[float], get, bluff_rate: float | None,
+                         bet_freq: float | None = None) -> list[float]:
     if a.kind == "raise":
         frac = a.bet_frac or 0.5
         keep = 0.5 if frac <= 0.5 else 0.4 if frac <= 1.0 else 0.3
         if a.facing:
             keep *= 0.7                                  # raising over our bet: stronger
+        elif bet_freq is not None:
+            # Research rule (#40): someone who bets q of the time when checked to can't be betting only their
+            # top 30-50%. Pessimistically assume they bet their strongest q fraction.
+            keep = max(keep, min(0.95, bet_freq))
         if bluff_rate is not None and frac >= BIG_BET_FRAC:
             b = bluff_rate
         else:

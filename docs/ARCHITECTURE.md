@@ -36,3 +36,5 @@ Ownership per file is in `docs/PLAN.md`. Run everything from the repo root (`pyt
 - The opponents are other teams' bots, which are likely simple and exploitable: calling stations, maniacs, fixed bet sizes, no adaptation. **Exploitation is the main edge.** Start from sensible default play, then shift with `OpponentStats` as data comes in.
 - Variance in heads-up is huge. Only trust harness results with duplicate deals and a CI that excludes 0.
 - Latency and legality come before strength. A crash or a time-out can forfeit hands or the match.
+
+All-in accounting, research, range assumptions and limits: [ALL_IN.md](ALL_IN.md).
