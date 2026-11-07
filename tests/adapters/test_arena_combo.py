@@ -40,7 +40,8 @@ def combo(monkeypatch):
                                 act=lambda gs: Response.raise_to(100))
     bot.model = SimpleNamespace(observe=lambda gs: None, record_own=lambda *args: None)
     state = SimpleNamespace(is_preflop=True, call_amount=10, max_raise_to=2000,
-                            min_raise_to=40, can_raise=True, can_bet=False)
+                            min_raise_to=40, can_raise=True, can_bet=False,
+                            stack_sizes=(1990, 1980), my_index=0)
     return bot, state, tracked
 
 
@@ -77,3 +78,12 @@ def test_postflop_uses_mainbot_response(combo):
     response = bot.act(state)
     assert response.action_type == "raise" and response.amount == 100
     assert tracked == []
+
+
+def test_covering_short_opponent_allin_uses_guarded_call_policy(combo):
+    bot, state, tracked = combo
+    state.stack_sizes = (1990, 0)
+    state.call_amount = 1980
+    response = bot.act(state)
+    assert response.amount == 100  # stubbed MainBot path, rather than external preflop's 60
+    assert tracked == [response]

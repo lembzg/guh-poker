@@ -176,7 +176,8 @@ def score_actions(hole: tuple[str, str], board: tuple[str, ...], pot: int, to_ca
                   bluff_rate: float | None = None, strength_samples: int = 32) -> list[ActionEV]:
     """EV (chips from now; folding = 0) of each legal-looking action.
 
-    pot: chips in the pot now, including any bet we face. to_call: chips we must add to call.
+    pot: chips in the pot now, including any bet we face. to_call: uncapped outstanding bet difference
+    (before limiting the call to my_behind), so any unmatched excess can be returned.
     my_behind / opp_behind: chips each player has behind now. min_bet: smallest extra over the call that
     counts as a legal bet/raise. If time_budget_ms is set and an exact flop count wouldn't fit, runouts
     are sampled to fit. in_position=False means a check lets them bet this street: their value hands and
@@ -209,7 +210,7 @@ def score_actions(hole: tuple[str, str], board: tuple[str, ...], pot: int, to_ca
     if to_call > 0:
         out.append(ActionEV("fold", 0, None, 0.0))
         call = min(to_call, my_behind)
-        out.append(ActionEV("call", call, None, eq_all * (pot + call) - call))
+        out.append(ActionEV("call", call, None, eq_all * (pot - max(0, to_call - call) + call) - call))
     else:
         out.append(ActionEV("check", 0, None, _check_ev(e, w, pct, pot, my_behind, opp_behind, opp_stats,
                                                         bluff_rate, in_position)))

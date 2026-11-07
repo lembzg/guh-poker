@@ -121,6 +121,7 @@ def play_hand(seats: tuple[Seat, Seat], deck: list[str], stacks: tuple[int, int]
             hand_id=hand_id, is_button=(p == 0), hole_cards=holes[p],
             board=full_board[:STREET_CARDS[street]], street=street,
             small_blind=small_blind, big_blind=big_blind, starting_stack=stacks[p],
+            opp_starting_stack=stacks[1 - p],
             my_committed=committed[p], opp_committed=committed[1 - p],
             history=tuple(ActionRecord(s, "me" if a == p else "opp", k, r) for s, a, k, r in history),
             legal=legal,

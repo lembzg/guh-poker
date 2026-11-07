@@ -125,7 +125,9 @@ def test_broken_state_still_acts_legally():
 def test_decide_crash_falls_back_to_legal_action(monkeypatch):
     bot = V0Bot(seed=1)
     monkeypatch.setattr(bot._quant, "decide", lambda _: 1 / 0)
-    assert bot.act(STATES["facing_shove"]) == Action("fold")
+    # Terminal calls are handled independently before Quant; its failure cannot fold AA.
+    assert bot.act(STATES["facing_shove"]) == Action("call")
+    assert bot.act(STATES["bb_vs_open"]) == Action("fold")
     assert bot.act(STATES["river_no_raise_allowed"]) == Action("check")
 
 

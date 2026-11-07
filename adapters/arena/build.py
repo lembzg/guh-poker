@@ -26,9 +26,9 @@ REPO = Path(__file__).resolve().parents[2]
 
 # Everything MainBot needs at play time. Offline-only modules (numpy EV engine, harness) stay out.
 FILES = [
-    "core/__init__.py", "core/interface.py", "core/cards.py", "core/equity.py", "core/data/preflop_ranking.json",
+    "core/__init__.py", "core/allin.py", "core/interface.py", "core/cards.py", "core/equity.py", "core/data/preflop_ranking.json",
     "bots/__init__.py", "bots/main/__init__.py", "bots/main/bot.py", "bots/main/fallback.py",
-    "bots/main/postflop.py", "bots/main/opponent.py", "bots/main/preflop.py",
+    "bots/main/postflop.py", "bots/main/opponent.py", "bots/main/allin.py", "bots/main/preflop.py",
     "adapters/__init__.py", "adapters/arena/__init__.py", "adapters/arena/translate.py",
 ]
 OPPONENT_FILES = ["harness/__init__.py", "harness/_types.py", "harness/opponents.py"]

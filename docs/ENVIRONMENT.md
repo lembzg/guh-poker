@@ -77,3 +77,14 @@ long-match results do not establish a tournament-length improvement. Compare var
 duplicate deals across independent short matches, and confirm selected parameters on fresh seeds.
 
 ## Open questions
+
+## All-in accounting (#39)
+
+`opp_starting_stack` now carries opponent remaining chips plus their hand-total
+commitment, separately from our `starting_stack`. Terminal calls exclude unmatched
+excess. A covering raise is terminal even when we retain chips, so no opponent
+fold is inferred from missing subsequent turns. Arena observation is partial:
+SB folds before our first decision remain invisible; the all-in learner keeps
+its open-jam prior in that context rather than learning from selected raises.
+The combined candidate sends terminal preflop calls through MainBot's guarded
+equity path. Research, formulas, prior choices and limitations: [ALL_IN.md](ALL_IN.md).
