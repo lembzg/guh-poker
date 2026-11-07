@@ -49,6 +49,7 @@ class GameState:
     history: tuple[ActionRecord, ...]           # whole hand so far, blinds excluded
     legal: LegalActions
     time_left_ms: int | None = None             # if the environment exposes a clock
+    opp_starting_stack: int | None = None       # actual opponent hand-start stack; None assumes starting_stack
 
 @dataclass(frozen=True)
 class Action:
@@ -137,3 +138,12 @@ It appends one JSON object per match to `results/<date>.jsonl` (gitignored) and 
  "b_ms_avg": 0.1, "b_ms_max": 2, "illegal_a": 0, "illegal_b": 0, "errors_a": 0, "errors_b": 0}
 ```
 The harness also exposes `play_match(bot_a, bot_b, hands, seed, duplicate, stack, bb) -> dict` (that same dict) for use in tests and tuning scripts.
+
+### All-in stack metadata (#39)
+
+`starting_stack` is our hand-start stack. Producers with both stacks populate
+`opp_starting_stack`; legacy callers may omit it and consumers then assume equal
+starting stacks. Both commitments remain hand totals. An opponent can be all-in
+while we retain chips; lack of a legal raise alone does not establish an all-in.
+For a short call, exclude the opponent's unmatchable excess from the contestable
+pot. This is an additive contract extension; existing positional fields stay fixed.

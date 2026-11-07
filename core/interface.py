@@ -39,6 +39,7 @@ class GameState:
     history: tuple[ActionRecord, ...]  # whole hand so far, blinds excluded
     legal: LegalActions
     time_left_ms: int | None = None  # if the environment exposes a clock
+    opp_starting_stack: int | None = None  # None: legacy equal-stack assumption
 
 
 @dataclass(frozen=True)
