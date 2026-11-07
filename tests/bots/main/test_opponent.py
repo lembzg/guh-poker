@@ -232,3 +232,31 @@ def test_counts_and_bet_frequency():
     assert c["bet_when_checked_to"] == (12, 24) and c["fold_to_bet"] == (12, 12)
     assert c["fold_to_bet_by_street"][3] == (12, 12) and c["fold_to_bet_by_street"][2] == (0, 0)
     assert m.bet_frequency() == pytest.approx(17 / 34)
+
+
+def test_per_street_bet_frequency_bounds_bluffs():
+    """#53: an opponent who bets the flop a lot but the river rarely is assumed value-heavy on the river."""
+    from bots.main.opponent import _Act, _postflop_multiplier
+
+    def mult(street_freq):
+        a = _Act(street=4, actor="opp", kind="raise", raise_to=100, pot_before=100, facing=False,
+                 bet_frac=0.66, raises_before=0)
+        pct = [i / 100 for i in range(100)]
+        get = lambda name: 4.0 if name == "aggression" else 0.45
+        m = _postflop_multiplier(a, pct, get, None, 0.6, street_freq)
+        return m[10]   # weight on a weak hand
+
+    rarely, often = mult(0.33), mult(0.75)
+    assert rarely < often                    # rare river bettor: weak hands get far less weight
+    assert mult(None) >= rarely              # without street data: falls back to aggression
+
+    m = OpponentModel()
+    for _ in range(12):   # flop: they bet when checked to; river: they check when checked to
+        m.observe_hand(hand([R(1, "me", "call", None), R(1, "opp", "check", None),
+                             R(2, "opp", "raise", 4), R(2, "me", "call", None),
+                             R(3, "opp", "check", None), R(3, "me", "check", None),
+                             R(4, "opp", "check", None), R(4, "me", "check", None)],
+                            board=("As", "7d", "2c", "9h", "3s")))
+    assert m.street_bet_frequency(2) == pytest.approx(17 / 22)
+    assert m.street_bet_frequency(4) == pytest.approx(5 / 22)
+    assert m.counts()["bet_when_checked_to_by_street"][4] == (0, 12)

@@ -31,6 +31,12 @@ BLUFF_MIN_SAMPLES = 3
 # blind, so their observed VPIP as SB is ~1. When that censoring is detected, assume this entry rate instead.
 HIDDEN_SB_VPIP_PRIOR = 0.45
 CENSOR_MIN_HANDS = 10
+# Per-street bluff share from per-street bet frequency (#53, research rule 2): if they bet q of the time when
+# checked to on a street and at most VALUE_SHARE of a range is genuine value, at least (q - v) / q of those bets
+# are non-value. A 33% river bettor is mostly value; a 70% bettor is about half bluffs.
+VALUE_SHARE = 0.35
+MIN_BLUFF_SHARE = 0.08
+STREET_MIN_OBS = 10
 
 _ALL_COMBOS = [(a, b) for a in range(52) for b in range(a)]   # 1326 combos, higher card index first
 MAX_AGGRESSION = 10.0  # reported when they bet/raise but never call
@@ -139,6 +145,7 @@ class OpponentModel:
         self._big_shown = _Rate()
         self._fb_street = {2: _Rate(), 3: _Rate(), 4: _Rate()}   # folds to our bets, by street
         self._checked_to = _Rate()                               # they bet when not facing a bet (postflop)
+        self._checked_to_street = {2: _Rate(), 3: _Rate(), 4: _Rate()}
         self._sb_seen = self._sb_fold = self._bb_seen = 0       # preflop decisions by their seat
 
     # ------------------------------------------------------------- learning
@@ -189,6 +196,7 @@ class OpponentModel:
                 self._fb_street[a.street].add(a.kind == "fold")
             elif a.kind in ("check", "raise"):
                 self._checked_to.add(a.kind == "raise")
+                self._checked_to_street[a.street].add(a.kind == "raise")
             if a.kind == "raise":
                 self._aggr += 1
                 if a.bet_frac is not None:
@@ -242,6 +250,13 @@ class OpponentModel:
             avg_bet_frac=avg_frac,
         )
 
+    def street_bet_frequency(self, street: int) -> float | None:
+        """Posterior mean (Beta(5,5)) of betting when checked to on this street; None below STREET_MIN_OBS."""
+        r = self._checked_to_street.get(street)
+        if r is None or r.n < STREET_MIN_OBS:
+            return None
+        return (r.hits + 5) / (r.n + 10)
+
     def bet_frequency(self) -> float | None:
         """Posterior mean of how often they bet when checked to (Beta(5,5) prior); None below 10 chances."""
         b, n = self._checked_to.hits, self._checked_to.n
@@ -258,6 +273,7 @@ class OpponentModel:
             "fold_to_bet": (self._fb.hits, self._fb.n),
             "fold_to_bet_by_street": {s: (r.hits, r.n) for s, r in self._fb_street.items()},
             "bet_when_checked_to": (self._checked_to.hits, self._checked_to.n),
+            "bet_when_checked_to_by_street": {s: (r.hits, r.n) for s, r in self._checked_to_street.items()},
         }
 
     def bluff_rate(self) -> float | None:
@@ -295,7 +311,8 @@ class OpponentModel:
             vals = [_rank_ints([a, b] + board) for a, b in combos]
             for a in street_opp:
                 pct = _strength_percentile(vals, weights)
-                mult = _postflop_multiplier(a, pct, get, self.bluff_rate(), self.bet_frequency())
+                mult = _postflop_multiplier(a, pct, get, self.bluff_rate(), self.bet_frequency(),
+                                            self.street_bet_frequency(a.street))
                 weights = [w * m for w, m in zip(weights, mult)]
 
         out = {(_IDX_TO_CARD[a], _IDX_TO_CARD[b]): w for (a, b), w in zip(combos, weights) if w > 1e-9}
@@ -344,20 +361,25 @@ def _strength_percentile(vals: list[int], weights: list[float]) -> list[float]:
 
 
 def _postflop_multiplier(a: _Act, pct: list[float], get, bluff_rate: float | None,
-                         bet_freq: float | None = None) -> list[float]:
+                         bet_freq: float | None = None, street_freq: float | None = None) -> list[float]:
     if a.kind == "raise":
         frac = a.bet_frac or 0.5
         keep = 0.5 if frac <= 0.5 else 0.4 if frac <= 1.0 else 0.3
         if a.facing:
             keep *= 0.7                                  # raising over our bet: stronger
-        elif bet_freq is not None:
-            # Research rule (#40): someone who bets q of the time when checked to can't be betting only their
-            # top 30-50%. Pessimistically assume they bet their strongest q fraction.
-            keep = max(keep, min(0.95, bet_freq))
+        else:
+            q = street_freq if street_freq is not None else bet_freq
+            if q is not None:
+                # Research rule (#40): someone who bets q of the time when checked to can't be betting only
+                # their top 30-50%. Pessimistically assume they bet their strongest q fraction (per street, #53).
+                keep = max(keep, min(0.95, q))
         if bluff_rate is not None and frac >= BIG_BET_FRAC:
             b = bluff_rate
         else:
             b = min(0.6, max(0.05, 0.15 + 0.08 * (get("aggression") - 1.0)))
+            if street_freq is not None and not a.facing:
+                # #53: this street's bet frequency bounds how much of it can be bluffs.
+                b = min(b, max(MIN_BLUFF_SHARE, (street_freq - VALUE_SHARE) / street_freq))
         w = min(1.0, max(0.02, b * keep / ((1 - b) * (1 - keep))))   # so bluffs make up b of their bets
         return [1.0 if p >= 1 - keep else w for p in pct]
     if a.kind == "call" and a.facing:
