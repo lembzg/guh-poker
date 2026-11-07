@@ -1,8 +1,9 @@
 """Arena adapter tests with stand-ins for the organisers' player_sdk types (same field names)."""
 from dataclasses import dataclass, field
 from typing import Optional
+from types import SimpleNamespace
 
-from adapters.arena.translate import ArenaAdapter, card, to_game_state, to_response
+from adapters.arena.translate import ArenaAdapter, card, from_response, to_game_state, to_response
 from core.interface import Action, ActionRecord
 
 
@@ -151,3 +152,45 @@ def test_adapter_never_raises():
 
 def test_card():
     assert card("TD") == "Td" and card("as") == "As"
+
+
+def test_external_response_uses_hand_totals_and_legal_bounds():
+    gs = flop_bb_facing_bet()
+    state = to_game_state(gs, 3)
+    def response(kind, amount=None):
+        return SimpleNamespace(action_type=kind, amount=amount)
+    assert from_response(response("raise", 240), gs, state) == Action("raise", 300)
+    assert from_response(response("raise", 1), gs, state) == Action("raise", 220)
+    assert from_response(response("raise", 9999), gs, state) == Action("raise", 2000)
+    assert from_response(response("all_in"), gs, state) == Action("raise", 2000)
+    assert from_response(response("fold"), gs, state) == Action("fold")
+    assert from_response(response("call"), gs, state) == Action("call")
+
+
+def test_observe_preflop_then_act_postflop_reports_complete_hand_once():
+    from dataclasses import replace
+    bot = Recorder([Action("call")])
+    ad = ArenaAdapter(bot, Resp)
+    pre = replace(preflop_button(), hole_cards=("QH", "JH"), my_index=1)
+    ad.observe(pre, SimpleNamespace(action_type="call", amount=None))
+    assert bot.states == []  # external preflop never invokes MainBot's preflop strategy
+    ad.act(flop_bb_facing_bet())
+    ad.observe(preflop_button(), SimpleNamespace(action_type="fold", amount=None))
+    assert ad.hand_id == 1 and ad.errors == 0
+    assert len(bot.results) == 1
+    result = bot.results[0]
+    assert [r.kind for r in result.history] == ["raise", "call", "check", "raise", "call"]
+    assert result.history[-1] == ActionRecord(2, "me", "call", None)
+
+
+def test_observed_preflop_raise_followed_by_new_hand_infers_fold():
+    from dataclasses import replace
+    bot = Recorder([])
+    ad = ArenaAdapter(bot, Resp)
+    ad.observe(preflop_button(), SimpleNamespace(action_type="raise", amount=60))
+    ad.observe(replace(preflop_button(), hole_cards=("7C", "7D")),
+               SimpleNamespace(action_type="fold", amount=None))
+    assert bot.results[0].history == (
+        ActionRecord(1, "me", "raise", 60), ActionRecord(1, "opp", "fold", None),
+    )
+    assert ad.errors == 0

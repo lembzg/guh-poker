@@ -17,7 +17,7 @@ No imports from `player_sdk` here: the `Response` class is passed in, so this fi
 """
 from __future__ import annotations
 
-from core.interface import Action, ActionRecord, GameState, HandResult, LegalActions
+from core.interface import Action, ActionRecord, GameState, HandResult, LegalActions, clamp_to_legal
 
 STREETS = {"preflop": 1, "flop": 2, "turn": 3, "river": 4}
 BLINDS = ("post_small_blind", "post_big_blind")
@@ -128,7 +128,7 @@ def from_response(resp, gs, state: GameState) -> Action:
         if kind == "all_in" or getattr(resp, "amount", None) is None:
             return Action("raise", state.legal.max_raise_to)
         prior_me = state.my_committed - int(gs.current_bets[gs.my_index])
-        return Action("raise", prior_me + int(resp.amount))
+        return clamp_to_legal(Action("raise", prior_me + int(resp.amount)), state.legal)
     return Action("call") if call > 0 else Action("check")
 
 
