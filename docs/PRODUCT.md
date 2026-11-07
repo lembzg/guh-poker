@@ -35,7 +35,8 @@ _One line per measured run, newest at the bottom. Every row must come from the h
 
 Research and policy assumptions: [ALL_IN.md](ALL_IN.md). Baseline is the unchanged
 `d83bd2b` snapshot (same code as `9a9575a` plus the optional unused stack field);
-candidate is the implementation on `lembzg/39-allin-logic`, measured before commit.
+candidate is the implementation committed as `b2fef33` on
+`lembzg/39-allin-logic`, measured with the same source immediately before commit.
 The baseline archive reports `nogit`; provenance is recorded here explicitly.
 Both use the full development Python 3.12 environment (including v0's existing
 eval7). Each run uses 400 hands = 200 duplicate deals, 100bb, seeds 101/202/303,
