@@ -140,26 +140,43 @@ def _rank_matrix(cards):
     return np.select(conds, vals, default=_TOP5[m1])
 
 
-def _rank_ints(cards: list[int]) -> int:
-    """Pure-Python twin of _rank_matrix for one hand."""
-    counts = [0] * 13
-    smask = [0, 0, 0, 0]
-    scount = [0, 0, 0, 0]
+# Incremental evaluator state: (m1, m2, m3, m4, suits, counts) as plain ints.
+#   m1..m4: rank masks of ranks seen exactly 1..4 times; suits: 4 x 13-bit rank masks, one per suit;
+#   counts: 4 x 4-bit card counts per suit. Adding a card is a few bit operations, so the board can be
+#   evaluated once and only the sampled cards added (#47).
+_EMPTY = (0, 0, 0, 0, 0, 0)
+_BIT = [1 << (c >> 2) for c in range(52)]
+_SUIT_BIT = [1 << ((c >> 2) + 13 * (c & 3)) for c in range(52)]
+_SUIT_ONE = [1 << (4 * (c & 3)) for c in range(52)]
+
+
+def _add(state: tuple, cards) -> tuple:
+    m1, m2, m3, m4, su, cn = state
     for c in cards:
-        r, s = c >> 2, c & 3
-        counts[r] += 1
-        smask[s] |= 1 << r
-        scount[s] += 1
-    m = [0, 0, 0, 0, 0]
-    for r, n in enumerate(counts):
-        if n:
-            m[n] |= 1 << r
-    m1, m2, m3, m4 = m[1], m[2], m[3], m[4]
-    rmask = m1 | m2 | m3 | m4
+        b = _BIT[c]
+        if m1 & b:
+            m1 ^= b
+            m2 |= b
+        elif m2 & b:
+            m2 ^= b
+            m3 |= b
+        elif m3 & b:
+            m3 ^= b
+            m4 |= b
+        else:
+            m1 |= b
+        su |= _SUIT_BIT[c]
+        cn += _SUIT_ONE[c]
+    return m1, m2, m3, m4, su, cn
+
+
+def _eval(m1: int, m2: int, m3: int, m4: int, su: int, cn: int) -> int:
+    """Strength from an incremental state (same encoding as _rank_matrix)."""
     fmask = 0
-    for s in range(4):
-        if scount[s] >= 5:
-            fmask = smask[s]
+    fl = (cn + 0x3333) & 0x8888          # a suit nibble >= 5 sets its bit 3 (counts <= 7, no overflow)
+    if fl:
+        fmask = (su >> (13 * ((fl.bit_length() - 4) >> 2))) & 0x1FFF
+    rmask = m1 | m2 | m3 | m4
     hb, st = _HB_L, _ST_L
     if fmask and st[fmask] >= 0:
         return (8 << 25) | (st[fmask] << 21)
@@ -185,6 +202,11 @@ def _rank_ints(cards: list[int]) -> int:
             return (2 << 25) | (p1 << 21) | (p2 << 17) | _TOP_L[1][rmask & ~(1 << p1) & ~(1 << p2)]
         return (1 << 25) | (p1 << 21) | _TOP_L[3][m1]
     return _TOP_L[5][m1]
+
+
+def _rank_ints(cards: list[int]) -> int:
+    """Pure-Python twin of _rank_matrix for one hand."""
+    return _eval(*_add(_EMPTY, cards))
 
 
 def rank7(cards: tuple[str, ...]) -> int:
@@ -242,22 +264,23 @@ def equity(hole: tuple[str, str], board: tuple[str, ...], opp_range: Range | Non
             combos = None
 
     need = 5 - len(brd)
-    rank = _rank_ints
+    board_state = _add(_EMPTY, brd)
+    hero_state = _add(board_state, hero)
     if need == 0:  # river: exact
-        h = rank(hero + brd)
+        h = _eval(*hero_state)
         if combos is None:
             combos = list(combinations(live, 2))
             weights = [1.0] * len(combos)
         score = total = 0.0
         for (a, b), w in zip(combos, weights):
-            o = rank([a, b] + brd)
+            o = _eval(*_add(board_state, (a, b)))
             score += w if h > o else (w / 2 if h == o else 0.0)
             total += w
         return score / total
 
     rng = random.Random(seed)
     sample = rng.sample
-    base = hero + brd
+    add, ev = _add, _eval
     total_n = max(1, int(samples))
     done = 0
     score = 0.0
@@ -272,10 +295,9 @@ def equity(hole: tuple[str, str], board: tuple[str, ...], opp_range: Range | Non
         n = min(chunk, total_n - done)
         if combos is None:
             for _ in range(n):
-                d = sample(live, need + 2)
-                ext = d[2:]
-                h = rank(base + ext)
-                o = rank(d[:2] + brd + ext)
+                d = sample(live, need + 2)            # opponent's 2 cards + the runout
+                h = ev(*add(hero_state, d[2:]))
+                o = ev(*add(board_state, d))
                 score += 1.0 if h > o else (0.5 if h == o else 0.0)
         else:
             top = cum[-1]
@@ -283,8 +305,8 @@ def equity(hole: tuple[str, str], board: tuple[str, ...], opp_range: Range | Non
                 a, b = combos[bisect_right(cum, rng.random() * top)] if len(combos) > 1 else combos[0]
                 d = sample(live, need + 2)
                 ext = [c for c in d if c != a and c != b][:need]
-                h = rank(base + ext)
-                o = rank([a, b] + brd + ext)
+                h = ev(*add(hero_state, ext))
+                o = ev(*add(board_state, ext + [a, b]))
                 score += 1.0 if h > o else (0.5 if h == o else 0.0)
         done += n
         if time_budget_ms is not None and (time.perf_counter() - t0) * 1000.0 >= time_budget_ms:
