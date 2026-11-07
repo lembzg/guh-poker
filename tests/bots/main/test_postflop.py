@@ -154,3 +154,25 @@ def test_sticky_caller_gets_big_value_bets():
     nuts = spot("Qh Jh", "Th 9c 8d 2s Kd", pot=40)
     a = postflop_action(nuts, STATION, top_percent_range(0.9), opp_counts=sticky)
     assert a.kind == "raise" and a.raise_to - nuts.my_committed >= 1.4 * 40
+
+
+def test_mdf_floor_vs_frequent_bettor(monkeypatch):
+    import bots.main.postflop as P
+    from bots.main.postflop import made_hand_percentile
+    monkeypatch.setattr(P, "MDF_SHARE", 0.9)       # off by default (#50); test the dial
+    assert made_hand_percentile(("Qh", "Jh"), ("Th", "9c", "8d", "2s", "Kd")) > 0.99    # the nuts
+    assert made_hand_percentile(("4c", "3d"), ("Ah", "Kd", "9s", "8c", "2h")) < 0.15     # air
+    # Middle pair facing a pot-size bet: folds normally vs a tight range, defends vs a confident auto-bettor.
+    s = spot("9d 7c", "Kc 9h 4s 2d", facing=80, pot=40)     # 2x-pot bet: MDF = 1/3, defend top 30%
+    tight = top_percent_range(0.05)
+    assert postflop_action(s, None, tight, opp_counts=STATION_COUNTS).kind == "fold"
+    hf = {"fold_to_bet": (10, 30), "fold_to_bet_by_street": {}, "bet_when_checked_to": (22, 26)}
+    assert postflop_action(s, None, tight, opp_counts=hf).kind == "call"
+
+
+def test_mdf_floor_off_by_default():
+    import bots.main.postflop as P
+    assert P.MDF_SHARE == 0.0
+    s = spot("9d 7c", "Kc 9h 4s 2d", facing=80, pot=40)
+    hf = {"fold_to_bet": (10, 30), "fold_to_bet_by_street": {}, "bet_when_checked_to": (22, 26)}
+    assert postflop_action(s, None, top_percent_range(0.05), opp_counts=hf).kind == "fold"

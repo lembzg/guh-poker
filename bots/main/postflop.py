@@ -17,8 +17,9 @@ from __future__ import annotations
 import math
 import random
 from dataclasses import dataclass, field
+from itertools import combinations
 
-from core.equity import RANKS, Range, equity, top_percent_range
+from core.equity import _EMPTY, RANKS, Range, _add, _eval, _idx, equity, top_percent_range
 from core.interface import Action, GameState, OpponentStats
 
 DEFAULT_BUDGET_MS = 60.0
@@ -39,6 +40,26 @@ BLUFF_MARGIN = {2: 0.04, 3: 0.06, 4: 0.08}  # required lower-bound fold rate abo
 BARREL_MIN_OBS = 15                         # turn/river pure-air barrels need this many same-street samples
 BLUFF_SIZES = (0.33, 0.5, 0.67)             # smallest passing size wins: small bluffs need fewer folds
 Z05, Z10 = 1.645, 1.2816
+# MDF floor vs confident frequent bettors (#50). OFF by default: two organisers'-engine A/Bs (seeds 21, 22,
+# 2000-3000 hands per opponent) showed no consistent gain (random: +2.2 then -1.2 bb/hand). Kept as a dial for
+# tuning (#46); 0.9 = defend at least 90% of MDF.
+MDF_SHARE = 0.0
+
+
+def made_hand_percentile(hole: tuple[str, str], board: tuple[str, ...]) -> float:
+    """Share of all opponent holdings our current made hand beats on this board (ties count half)."""
+    hero = [_idx(c) for c in hole]
+    brd = [_idx(c) for c in board]
+    board_state = _add(_EMPTY, brd)
+    h = _eval(*_add(board_state, hero))
+    dead = set(hero + brd)
+    live = [c for c in range(52) if c not in dead]
+    score = n = 0
+    for a, b in combinations(live, 2):
+        o = _eval(*_add(board_state, (a, b)))
+        score += 2 if h > o else (1 if h == o else 0)
+        n += 1
+    return score / (2 * n) if n else 0.0
 
 
 def beta_bounds(hits: float, n: int, prior: float = 5.0) -> tuple[float, float]:
@@ -236,6 +257,13 @@ def _facing_bet(state, eq, k, street, spr, wet, draw, rng_mix) -> Action:
         return _bet(state, 0.75)
     if eq >= need:
         return Action("call")
+    if k.hf_bettor and MDF_SHARE > 0:
+        # MDF floor (#50): against a confident frequent bettor, don't fold so much that their bluffs
+        # auto-profit. Defend if our made hand is in the top MDF_SHARE * MDF of holdings on this board.
+        pot_before = max(1, pot - call)
+        mdf = pot_before / (pot_before + call)
+        if made_hand_percentile(state.hole_cards, state.board) >= 1 - MDF_SHARE * mdf:
+            return Action("call")
     return Action("fold")
 
 
