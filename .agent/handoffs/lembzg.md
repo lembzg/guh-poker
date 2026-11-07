@@ -1,42 +1,35 @@
 # Handoff — lembzg
 
-Updated: 2026-11-07T01:47:52.105571+00:00
-Status: in_progress
-Task: #44 Combine final bot candidate and verify integration (PR #45)
+Updated: 2026-11-07T01:56:46.567323+00:00
+Status: needs_attention
+Task: #44 Full audit of final combined bot (PR #45)
 Branch: lembzg/44-final-combined
-Commit: 36943b2
+Commit: 346d678 Fix opponent and hand tracking found in combined audit (#44)
 
 ## Done
-- Combined #32, #34, #41, #43, #42 and #36 on one branch; PR #45 is the integration candidate against main.
-- Resolved postflop conflict with confidence gate on actual legal effective bet; added two interaction regressions.
-- Local preflop helpers included; build --strategy combo requires no external preflop checkout. Build and exact verification in docs/ENVIRONMENT.md and docs/integration-change-ledger.md.
-
-## In progress
-- Full audit: fixed covering-raise false folds and repeated-card hand detection; three new regressions. Serial full gate with ARENA_ROOT passes all 286 tests; 8800 arena hands across 11 styles/two seeds fault-free; 60000 evaluator comparisons agree.
-- Refreshing exact corrected package and running clean-snapshot/packed verification. Previous delivered package is superseded once rebuilt.
-
-## Files touched
-- Integration of preflop helper/table/tools, combined routing, all-in helpers, stack contract, confidence-based postflop/opponent model and requirements/test gate.
-- New integration ledger, ENVIRONMENT.md candidate instructions, two postflop regressions, own handoff.
+- Combined #32/#34/#41/#43/#42/#36, all six exact heads retained.
+- Full audit fixed two reproduced tracker bugs: false folds after covering a short opponent, and consecutive identical-hole-card hand detection. Three new regressions pass; duplicate same-request bookkeeping stays idempotent.
+- Rebuilt exact corrected source and packed envelope from 346d678; outputs in Documents/Codex/2026-11-07/app/outputs, including FINAL-COMBINED-AUDIT.md, manifest, evidence and final-test handoff.
 
 ## Tests
-- Dev Python 3.12 ./scripts/check.sh: 224 passed, 1 arena module skipped, 7 existing eval7 warnings; check OK (pip bootstrapped into existing dev venv first).
-- Real engine preflop Python 3.14 with ARENA_ROOT: 59 passed.
-- Clean git-archive evaluation, stdlib Python 3.14: 108 focused regressions passed; source validates 40 hands, zero faults; pack fresh-process validation passed.
-- Exact final repack additionally plays 80 hands vs @shove seed 609, zero faults. GitHub PR #45 CI passed for code revision 4ad3c11.
-- Unpacked combined payload: 400 hands each vs @shove seed 607 and @random seed 608, zero faults, 6.0s/6.9s thinking. Integration smoke only, not superiority proof.
+- Full quality gate WITH ARENA_ROOT: 286 passed, no skips, 7 legacy eval7 warnings; check OK.
+- Clean git archive under Python 3.14 without numpy/eval7: 251 passed, 1 legacy skip; two offline numpy test modules excluded (covered above).
+- Independent evaluator comparisons: 60000 five/six/seven-card rankings agree with eval7.
+- Corrected source: 8800 real-engine hands, 11 opponent styles, two seeds, zero faults.
+- Instrumented corrected source: 1000 hands/2012 decisions, both seats/unequal stacks, no faults/internal errors/fallbacks; p50 10.158ms, p99 22.640ms, max 27.300ms.
+- Exact corrected package: source/fresh-process packed validation pass; 1200 unpacked hands vs random/shove/starter, zero faults.
 
 ## Bugs / blockers
-- No integration findings remain. Existing range approximations, hidden arena observations, stochastic equity and preflop randomness remain; final testing must assess the exact combined candidate.
-- Default MainBot build still has fallback preflop; final entry MUST use --strategy combo. bots/myteam standalone still has placeholder postflop.
+- No remaining observed local correctness failure. Timing tests are sensitive: local concurrent fallback timing failed, serial full gate passed unchanged. GitHub 346d678 equity timing benchmark failed 20.705ms vs 20ms; same-revision rerun also failed 20.654ms vs 20ms. This remains an open performance-gate finding; PR is not fully green.
+- Partial observations, heuristic ranges and stochastic choices remain; no tournament-superiority claim.
+- Build MUST use --strategy combo. Main default has fallback preflop; standalone bots/myteam retains placeholder postflop.
 
 ## Decisions & dependencies
-- User explicitly requested combining EVERYTHING for their final test. Preserved main and all source branches; no tournament upload or entry selection.
-- Separate overnight/final-test checkout under Documents/Codex was left untouched.
-- Shared-contract review remains applicable before any main merge; PR #45 consolidates existing pending changes without merging or closing their PRs.
+- No main merge/upload. Separate overnight/final-test checkout untouched. No strategy thresholds or benchmark limits changed.
+- Runtime remains stdlib-only; dev cloudpickle installed for existing organiser tests, no project dependency change.
+- PR #45 remains draft for final comparisons/shared-contract review.
 
 ## Next steps
-1. Complete clean-snapshot and packed verification, refresh output manifest/report, push audit corrections.
-2. Use branch lembzg/44-final-combined / PR #45 as the candidate for the user's final test.
-3. Build with python -m adapters.arena.build --team final-combined --strategy combo; validate/pack in organisers' infrastructure checkout.
-4. Run held-out final comparisons against exact combined payload before selecting/submitting; coordinate review/merge of consolidated PR separately.
+1. Resolve repeated GitHub equity benchmark failure (20.65–20.71ms vs 20ms) before marking PR ready; do not weaken threshold silently.
+2. Use exact corrected 346d678 source/package for held-out final comparisons before entry selection.
+3. Coordinate shared-contract review/main merge separately.
