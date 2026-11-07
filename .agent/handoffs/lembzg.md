@@ -1,42 +1,40 @@
 # Handoff — lembzg
 
-Updated: 2026-11-07T01:04:18.042312+00:00
+Updated: 2026-11-07T01:36:52.673629+00:00
 Status: ready
-Task: #39 Research and correct heads-up all-in decisions (PRs #41, #43)
-Branch: lembzg/39-allin-logic
-Commit: 473c0d4 Record all-in research verification and packed arena results (#39)
+Task: #44 Combine final bot candidate and verify integration (PR #45)
+Branch: lembzg/44-final-combined
+Commit: 4ad3c11 Verify legal-size confidence gates in final combined bot (#44)
 
 ## Done
-- Researched PokerStars pot odds, HRC restricted HU Nash charts, TDA raise rules, GTO Wizard SPR and organisers @8b89346; design, sources and limitations in docs/ALL_IN.md.
-- Pushed additive opponent-stack contract in PR #41, implementation b2fef33 and verification in PR #43; both draft, stacked on existing #34 candidate.
-- Fixed contestable pots, unequal stacks, terminal-call chart bypass and margins, effective sizing, unbeatable fallback hands, completed-fold learning, partial observation bias, v0 model blinds, covering-bet inference and offline short-call EV.
-- Independent review passed after resolving its findings; all acceptance evidence is in docs/all-in-change-ledger.md.
+- Combined #32, #34, #41, #43, #42 and #36 on one branch; PR #45 is the integration candidate against main.
+- Resolved postflop conflict with confidence gate on actual legal effective bet; added two interaction regressions.
+- Local preflop helpers included; build --strategy combo requires no external preflop checkout. Build and exact verification in docs/ENVIRONMENT.md and docs/integration-change-ledger.md.
 
 ## In progress
-- No implementation work remains in this requested scope. PR stack awaits normal shared-contract/dependency review; no merge or upload performed.
+- Integration complete; exact-source package and final-test handoff delivered. No implementation remains.
 
 ## Files touched
-- core/allin.py plus optional opp_starting_stack in core/interface.py; bots/main/allin.py, bot.py, postflop.py, fallback.py, ev.py; v0 adapter/README.
-- Arena build/translation/combo wrapper, harness stack producer, focused tests, research/architecture/API/environment/product docs and single change ledger.
+- Integration of preflop helper/table/tools, combined routing, all-in helpers, stack contract, confidence-based postflop/opponent model and requirements/test gate.
+- New integration ledger, ENVIRONMENT.md candidate instructions, two postflop regressions, own handoff.
 
 ## Tests
-- Full dev Python 3.12: python -m pytest -q --disable-warnings → 215 passed (7 existing eval7 deprecation warnings).
-- Final focused stdlib Python 3.14 → 58 passed; independent reviewer separately ran 79 dev / 44 stdlib checks, all passed.
-- Baseline/candidate each 7,200 hands, seeds 101/202/303, duplicate 400-hand matches: zero illegal actions/errors. Per-run CIs and latency in PRODUCT.md; candidate maximum observed decision 154.30ms.
-- Arena source main/combo each validate 40 hands with zero faults; pack fresh-process validation passes, 300KB/536KB. Unpacked payloads vs @shove each 400 hands, seeds 404/505: zero faults; thinking 7.7s/6.2s.
-- scripts/check.sh → OK; git diff --check → clean; implementation PR GitHub quality gate passed before final documentation/handoff refresh.
+- Dev Python 3.12 ./scripts/check.sh: 224 passed, 1 arena module skipped, 7 existing eval7 warnings; check OK (pip bootstrapped into existing dev venv first).
+- Real engine preflop Python 3.14 with ARENA_ROOT: 59 passed.
+- Clean git-archive evaluation, stdlib Python 3.14: 108 focused regressions passed; source validates 40 hands, zero faults; pack fresh-process validation passed.
+- Exact final repack additionally plays 80 hands vs @shove seed 609, zero faults. GitHub PR #45 CI passed for code revision 4ad3c11.
+- Unpacked combined payload: 400 hands each vs @shove seed 607 and @random seed 608, zero faults, 6.0s/6.9s thinking. Integration smoke only, not superiority proof.
 
 ## Bugs / blockers
-- No blocking review findings. Range composition/priors and finite MC remain approximations; arena hides early SB folds, so that open-frequency context deliberately retains prior.
-- Ordinary shove initiation and existing short-stack charts remain heuristic; no claim of universally optimal NLHE play. No-decision HandResults reuse last depth metadata, suitable for current fixed-stack event.
+- No integration findings remain. Existing range approximations, hidden arena observations, stochastic equity and preflop randomness remain; final testing must assess the exact combined candidate.
+- Default MainBot build still has fallback preflop; final entry MUST use --strategy combo. bots/myteam standalone still has placeholder postflop.
 
 ## Decisions & dependencies
-- User explicitly requested deep research, fixes and push. No new runtime dependency or merge/submission authorized as part of this work.
-- PR #41 base eulabet/combo-proto (#34); PR #43 base lembzg/allin-contract (#41). Shared contract delivered separately per repository rules.
-- Combo source validation uses #32 helpers c457065a; #32 remains separate, no helper table copied into this repository.
-- Dev/arena environments remain in /private/tmp/claude-501/-Users-arryl-Desktop-guh-poker/bdb98b8b-e1f1-428f-90b3-812c4dd5d3bb/scratchpad/. Benchmarks and packed smoke artifacts are scratch under /Users/arryl/Documents/Codex/2026-11-07/i-d/work/.
+- User explicitly requested combining EVERYTHING for their final test. Preserved main and all source branches; no tournament upload or entry selection.
+- Separate overnight/final-test checkout under Documents/Codex was left untouched.
+- Shared-contract review remains applicable before any main merge; PR #45 consolidates existing pending changes without merging or closing their PRs.
 
 ## Next steps
-1. Review dependency stack #34 → #41 → #43; preserve contract-first shared review and rebase as prerequisites land.
-2. For any future strategy claim, test held-out duplicate seeds and arena partial-observation behavior; retain measured CIs and latency.
-3. Choose actual tournament entry/team separately; rebuild and pack only after approved integration. No submission was uploaded.
+1. Use branch lembzg/44-final-combined / PR #45 as the candidate for the user's final test.
+2. Build with python -m adapters.arena.build --team final-combined --strategy combo; validate/pack in organisers' infrastructure checkout.
+3. Run held-out final comparisons against exact combined payload before selecting/submitting; coordinate review/merge of consolidated PR separately.
