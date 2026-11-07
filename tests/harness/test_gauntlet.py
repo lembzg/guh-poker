@@ -95,3 +95,29 @@ def test_postflop_jammer_shoves_made_hands_and_folds_air():
     assert j.act(make_state(("4h", "3c"), ("Kd", "Qc", "9s"))) == Action("check")
     draw = make_state(("Ah", "5h"), ("Kh", "9h", "2c"), facing=10, pot=20)
     assert j.act(draw).kind == "raise"
+
+
+def test_research_archetypes_behave_as_described():
+    from harness.opponents import MCPotOdds, Maniac70, PassiveStation, SolverLite, StarterClone, TagValue
+    from tests.bots.main.test_fallback import make_state
+    nuts = make_state(("Ah", "Kh"), ("Qh", "Jh", "Th"))
+    air_facing = make_state(("4c", "3d"), ("Ah", "Kd", "9s", "8c", "2h"), facing=40, pot=40)
+    for bot in (StarterClone(), MCPotOdds(), PassiveStation()):
+        assert bot.act(nuts).kind == "raise", bot.name
+        assert bot.act(air_facing) == Action("fold"), bot.name
+    # Station calls a cheap bet with modest equity; starter clone wants +10% over pot odds.
+    middling = make_state(("9s", "7d"), ("Kc", "9h", "4s"), facing=4, pot=40)
+    assert PassiveStation().act(middling) == Action("call")
+    # TAG folds trash preflop, raises premiums.
+    assert TagValue().act(make_state(("7d", "2c"), facing=10, pot=30)) == Action("fold")
+    assert TagValue().act(make_state(("As", "Ah"), facing=10, pot=30)).kind == "raise"
+    # Maniac raises about 70% of the time.
+    m = Maniac70()
+    m.new_match("m", None)
+    raises = sum(m.act(make_state(("7d", "2c"), ("Kd", "9s", "3h"))).kind == "raise" for _ in range(400))
+    assert 230 < raises < 330
+    # Solver-lite opens about 70% from the button and always acts legally.
+    s = SolverLite()
+    s.new_match("m", None)
+    st = make_state(("Ah", "Kd"), facing=10, pot=30)
+    assert s.act(st).kind == "raise"
