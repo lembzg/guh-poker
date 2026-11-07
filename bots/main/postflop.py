@@ -207,6 +207,20 @@ def postflop_action(state: GameState, opp: OpponentStats | None, opp_range: Rang
     return _checked_to(state, eq, k, street, spr, wet, draw, rng_mix)
 
 
+# Out-of-position play after calling (weakness found vs aggressive bots). Both OFF by default; switched on only
+# if they win a two-seed organisers'-engine A/B.
+OOP_REALIZE = 1.0          # A: count only this share of our equity for OOP calls on flop/turn (e.g. 0.90)
+CHECK_RAISE = False        # B: check-raise strong hands / some draws vs confident frequent bettors
+CR_VALUE_EQ = 0.62
+CR_DRAW_FREQ = 0.35
+CR_MIN_BET_FREQ = 0.50     # q05 lower bound of their bet-when-checked-to rate
+
+
+def _frequent_bettor(k) -> bool:
+    b, n = (k.counts or {}).get("bet_when_checked_to", (0, 0))
+    return n >= 15 and lower_bound(b, n) >= CR_MIN_BET_FREQ
+
+
 def _facing_bet(state, eq, k, street, spr, wet, draw, rng_mix) -> Action:
     lg = state.legal
     call = lg.call_amount
@@ -239,7 +253,13 @@ def _facing_bet(state, eq, k, street, spr, wet, draw, rng_mix) -> Action:
     if (draw and street == 2 and k.folder and not k.maniac and lg.min_raise_to is not None
             and eq >= pot_odds - 0.05 and rng_mix.random() < 0.5):
         return _bet(state, 0.75)
-    if eq >= need:
+    oop = not state.is_button
+    if CHECK_RAISE and oop and street < 4 and lg.min_raise_to is not None and _frequent_bettor(k):
+        we_checked = any(a.street == street and a.actor == "me" and a.kind == "check" for a in state.history)
+        if we_checked and (eq >= CR_VALUE_EQ or (draw and eq >= 0.30 and rng_mix.random() < CR_DRAW_FREQ)):
+            return _bet(state, 0.75)          # B: check-raise a frequent bettor
+    realize = OOP_REALIZE if (oop and street < 4) else 1.0
+    if eq * realize >= need:
         return Action("call")
     return Action("fold")
 

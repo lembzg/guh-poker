@@ -178,3 +178,23 @@ def test_bluff_gate_prices_short_opponent_effective_bet(monkeypatch):
     # Only four additional chips are contestable: 4 / 24 + 0.08 < lower bound.
     action = postflop_action(state, None, None, opp_counts=counts)
     assert action.kind == "raise" and action.raise_to == 14
+
+
+def test_oop_dials_off_by_default_and_work_when_on(monkeypatch):
+    import bots.main.postflop as P
+    assert P.OOP_REALIZE == 1.0 and P.CHECK_RAISE is False
+    hist = [R(1, "opp", "raise", 6), R(1, "me", "call", None), R(2, "me", "check", None)]
+    # A: marginal OOP call becomes a fold with a 0.85 realization discount.
+    s = spot("9d 8c", "Kc 9h 4s", facing=10, pot=12, button=False, history=hist)
+    rng = top_percent_range(0.5)
+    base = postflop_action(s, None, rng)
+    monkeypatch.setattr(P, "OOP_REALIZE", 0.5)
+    assert base.kind == "call" and postflop_action(s, None, rng).kind == "fold"
+    monkeypatch.setattr(P, "OOP_REALIZE", 1.0)
+    # B: strong hand check-raises a confident frequent bettor.
+    freq = {"fold_to_bet": (10, 30), "fold_to_bet_by_street": {}, "bet_when_checked_to": (40, 50)}
+    strong = spot("Kd Ks", "Kc 9h 4s", facing=10, pot=12, button=False, history=hist)
+    monkeypatch.setattr(P, "RAISE_EQ", 0.99)          # isolate the check-raise path from the value raise
+    assert postflop_action(strong, None, rng, opp_counts=freq).kind == "call"
+    monkeypatch.setattr(P, "CHECK_RAISE", True)
+    assert postflop_action(strong, None, rng, opp_counts=freq).kind == "raise"
