@@ -116,6 +116,8 @@ class OpponentModel:
     def observe_hand(self, result: HandResult) -> None: ...      # call once per finished hand
     def stats(self) -> OpponentStats: ...
     def range_estimate(self, state: GameState) -> Range | None: ...   # opponent's likely holdings now; None = unknown
+    def bluff_rate(self) -> float | None: ...                    # share of their big (>= 2/3 pot) postflop bets shown down as bluffs
+def classify(stats: OpponentStats) -> str: ...                   # "station" | "maniac" | "nit" | "tag" | "unknown"
 
 # fallback.py (#5)
 def fallback_action(state: GameState) -> Action: ...             # no imports beyond core; < 1 ms; always legal
