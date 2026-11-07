@@ -2,14 +2,14 @@
 
 <!-- Only you edit your file. Overwrite (don't append) at each checkpoint. Format: .agent/RECOVERY.md -->
 
-Updated: 2026-11-07T15:14:46+00:00
+Updated: 2026-11-07T16:15:04+00:00
 Status: frozen
-Task: FROZEN entry v3 (human approved freeze). results/submission/gemiclaudex.pkl sha256 5343f326…; upload is the human's call. No further strategy changes.
+Task: FROZEN entry = v2 (sha256 ac7515a0…, code @1876919). Format is 400 hands (200 deals) round 1, 1200 (600 deals) top-5 final; v3 slower gates reverted (200-deal A/B -0.04±0.05, -0.30 vs @call). Upload is the human's call.
 Branch: eulabet/final-allin-fix
 Commit: 37f190c
 
 ## Done
-- RULE CHANGE (human, 2026-11-07): round 1 = 30 deals per pairing, finals = 60. Bank = 0.2 s × deals per half (6 s / 12 s); bot startup (spawn + unpickle) counts toward the first move's think time. Measured ~0.7 s per 30-deal half, 0 faults.
+- FORMAT (organisers, final word 2026-11-07 ~16:00): round 1 all-vs-all 400 hands; top 5 play 1200 hands. Broadcast shows biggest-swing hands. (Earlier "30/60 games" was superseded.) Startup counts toward first-move think time.
 - v3 entry: results/submission/gemiclaudex.pkl sha256 5343f32633896e7408b51b7429238d36aadeb36171a77de58fed711fec645dcf (arena checksum 480495adaaad) from eulabet/final-allin-fix @37f190c. Change: postflop Beta prior 5→7, gates 1.5x (station/folder 15, sticky 30, hf 22, auto 37, BARREL_MIN_OBS 22). A/B fresh paired seeds, 16 opps: 30 deals +0.09±0.03 (60 seeds), 60 deals +0.03±0.05 (40 seeds). Faster gates (0.6x) −0.09±0.06, rejected. v2 kept as gemiclaudex-v2-0.80.pkl.bak, v1 as gemiclaudex-v1-0.45.pkl.bak.
 - Short-match baseline (v2, 30 deals): +2.07 bb/hand mean; positive vs every external opponent; only loss vs our own old combo build.
 - OOP dials (A realization 0.90, B check-raise) A/B: no gain, kept off on branch eulabet/oop-play (not merged).
