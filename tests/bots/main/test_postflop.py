@@ -86,7 +86,10 @@ def test_turn_barrel_needs_same_street_evidence():
     s = spot("7c 6d", "As Kd Qh 2c", pot=24, history=hist)
     thin = {"fold_to_bet": (40, 50), "fold_to_bet_by_street": {3: (5, 6)}}
     assert postflop_action(s, FOLDER, top_percent_range(0.5), opp_counts=thin).kind == "check"
-    assert postflop_action(s, FOLDER, top_percent_range(0.5), opp_counts=FOLD_COUNTS).kind == "raise"
+    from bots.main.postflop import BARREL_MIN_OBS
+    n = BARREL_MIN_OBS + 2
+    enough = {**FOLD_COUNTS, "fold_to_bet_by_street": {**FOLD_COUNTS["fold_to_bet_by_street"], 3: (n - 4, n)}}
+    assert postflop_action(s, FOLDER, top_percent_range(0.5), opp_counts=enough).kind == "raise"
 
 
 def test_value_vs_station_is_thin_and_never_overbet():
