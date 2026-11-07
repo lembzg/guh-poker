@@ -1,12 +1,13 @@
 # Handoff — lembzg
 
-Updated: 2026-11-07T00:43:33.116053+00:00
+Updated: 2026-11-07T00:46:53.681623+00:00
 Status: ready
 Task: #27 Combined prototype integration fixes (PR #34)
 Branch: lembzg/34-combo-fixes
-Commit: a0b17c8 Make combined arena bot reproducibly buildable (#27)
+Commit: 337f7ad Merge gauntlet builder support into combined candidate (#27)
 
 ## Done
+- Resolved concurrent #38 builder conflict, preserving --bot / positional gauntlet API and adding two compatibility tests; final adapter suite: 25 passed.
 - PR #34 integration fix: merged latest main at 8ab7c46 for #19, added --strategy combo / --preflop-dir build, preserved default MainBot build.
 - Combo wrapper records the actual fallback action and keeps the returned action unchanged on bookkeeping errors. Added response-conversion, routing and builder regression tests.
 - docs/ENVIRONMENT.md documents the combined build, dependency on #32, upload-envelope unpacking and evaluation limits.
@@ -18,10 +19,10 @@ Commit: a0b17c8 Make combined arena bot reproducibly buildable (#27)
 - adapters/arena/{build,combo_bot_example,translate}.py; tests/adapters/; docs/ENVIRONMENT.md; this handoff.
 
 ## Tests
-- Python 3.12 dev venv: python -m pytest -q -> 179 passed.
+- Python 3.12 dev venv: python -m pytest -q -> 185 passed after #38 compatibility merge.
 - Python 3.14 without numpy/eval7: adapters + MainBot wiring/fallback/postflop/opponent tests -> 70 passed.
 - ./scripts/check.sh -> OK; git diff --check -> clean.
-- Arena @8b89346: source validate -> 40 hands, zero faults; pack with fresh-process validation -> 521 KB.
+- Arena @8b89346: source validate -> 40 hands, zero faults; pack with fresh-process validation -> 519 KB (07d401e467ca).
 - Packed payload only: random seed 101 and starter seed 102, 200 duplicate deals each -> 800 total hands, zero faults, 10.5s / 9.5s aggregate thinking.
 
 ## Bugs / blockers
