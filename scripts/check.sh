@@ -46,9 +46,13 @@ if command -v python3 >/dev/null; then
   [ -n "$pydirs" ] && { python3 -m compileall -q $pydirs >/dev/null || err "Python syntax errors (python3 -m compileall -q $pydirs)"; }
 fi
 
-# --- Stack checks: the Python-environment ticket adds install + tests here ---
-# Example: python3 -m pip install -q -r requirements.txt && python3 -m pytest -q
-# -----------------------------------------------------------------------------
+# 8. Install the requirements and run the tests.
+if command -v python3 >/dev/null; then
+  python3 -m pip install -q -r requirements.txt || err "could not install requirements.txt"
+  python3 -m pytest -q || err "tests failed"
+else
+  err "python3 not found"
+fi
 
 if [ "$fail" -ne 0 ]; then echo "check: FAILED"; exit 1; fi
 echo "check: OK"

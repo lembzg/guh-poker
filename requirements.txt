@@ -1,0 +1,4 @@
+# Development only: tools, harness and tests. The bot we pack runs on the
+# standard library, because the tournament machine has no numpy.
+numpy==2.4.6
+pytest==9.2.0
