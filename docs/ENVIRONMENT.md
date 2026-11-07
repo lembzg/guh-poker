@@ -15,7 +15,7 @@ Record **observed facts** with how you verified them: "sent a raise of 1 chip be
 ## Rules as enforced (vs rules as written)
 - Min-raise / all-in edge cases: `game/action_engine.py` (`min_raise_to`, `runtime.min_raise_size`). Not yet tested against our harness engine.
 - Time-out behaviour: 1 s per move is a fault; separate thinking bank 0.2 s × deals per half (`arena/duel.py: think_budget_per_deal`); overdraw → always-fold stub for the match.
-- **Format change (organisers, 2026-11-07): round 1 = 30 deals per pairing, finals = 60.** Bank is then 6 s / 12 s per half. Bot startup (process spawn + unpickle) is timed inside the first move, so it counts against the bank. Our entry uses ~0.7 s per 30-deal half, 0 faults.
+- **Format (organisers, final, 2026-11-07 ~16:00): round 1 all-vs-all 400 hands (200 deals × 2 seats); top 5 play 1200 hands (600 deals).** Bank 40 s / 120 s per half. Bot startup (spawn + unpickle) is timed inside the first move. Broadcast shows the biggest-swing hands.
 - Illegal-action behaviour: fault → check, else fold; 20 faults → always-fold stub for the match.
 - Built-in opponents for `python -m arena match`: `call`, `fold`, `random`, `shove`.
 
@@ -30,7 +30,7 @@ How each environment field maps to `GameState` / `Action` in `docs/API.md`. Note
 1. **No numpy at play time.** `core/equity.py` (numpy evaluator), `bots/main/opponent.py`, `bots/main/ev.py` must get pure-Python paths. `rank7`/`_rank_ints` are already pure Python.
 2. **No eval7** → v0's postflop equity is disabled in the tournament (it never bets postflop without it).
 3. **Time:** 1 s per move hard; average budget 0.2 s per deal ≈ 50 ms per decision. Pure-Python Monte Carlo of ~1000 samples fits.
-4. **Short matches:** 30 (round 1) / 60 (finals) hands per opponent per half, model reset each half → solid defaults matter more than slow-converging exploits; `bluff_rate` never learns (no showdown cards).
+4. **Short matches:** 200 (round 1) / 600 (final) hands per opponent per half, model reset each half → solid defaults matter more than slow-converging exploits; `bluff_rate` never learns (no showdown cards).
 5. **Packaging:** everything must import from helper `.py` files next to `bot.py`, and data (e.g. `core/data/preflop_ranking.json`) must be embedded or loaded in `__init__`.
 
 ## Verified locally (EulaBet, 2026-11-07, their repo @8b89346, Python 3.14, no numpy)
