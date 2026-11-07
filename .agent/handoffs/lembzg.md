@@ -1,18 +1,19 @@
 # Handoff — lembzg
 
-Updated: 2026-11-07T01:34:34.558447+00:00
+Updated: 2026-11-07T01:35:58.868763+00:00
 Status: ready
 Task: #33 Report-only overnight sparring/tuning; DO NOT START until user explicitly asks
 Branch: lembzg/33-overnight-runner
 Commit: 5eeba1d Freeze reviewed bot revisions and reject hidden strategy errors (#33)
 
 ## Done
+- Published PR #46 on lembzg/33-overnight-runner; stacked on #34. CI green, working tree clean before this metadata checkpoint.
 - Added tools/tune/ Python3.14 runner, copied-only parameter variants, eight-family search, shifted validation, locked 14-family final audit, paired match-cluster inference, durable raw results and morning reports.
 - Added frozen source/rules/default/interface checks, optional --bot-ref, restart/deadline/resource guards and Linux worker group recovery. No production strategy/config/table edits.
 - docs/OVERNIGHT.md contains exact CachyOS/uv setup, safe preparation, explicit later start, output interpretation, rules and limits. README links it.
 
 ## In progress
-- Publish branch/draft PR; wait for explicit user instruction before any real sparring, tuning, validate, or pack-with-validation command.
+- No implementation work remains. Published draft PR #46 with green CI; waiting for explicit user instruction before any real sparring, tuning, validate, or pack-with-validation command.
 
 ## Files touched
 - tools/tune/; tests/tools/tune/; docs/OVERNIGHT.md; README.md navigation; this handoff.
