@@ -6,7 +6,7 @@ Updated: 2026-11-07T01:01:18+00:00
 Status: waiting
 Task: Night break. PR #42 (research rules + #35) awaits lembzg contract approval; overnight runs by partner.
 Branch: eulabet/overnight
-Commit: (see git log)
+Commit: e26c1d8
 
 ## Done
 - Merged: #15 equity, #18 harness, #23 gauntlet, #25/#28 EV tool, #20 postflop, #21 MainBot, #30 pure-Python runtime, #31 arena adapter, #38 arena gauntlet. #19 opponent model merged by lembzg.
