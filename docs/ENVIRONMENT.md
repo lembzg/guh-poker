@@ -129,3 +129,10 @@ The combined candidate's smoke verification is recorded in
 [integration-change-ledger.md](integration-change-ledger.md). Those checks verify
 integration/legality, not tournament superiority; the separate final-test work
 must compare the exact combined artifact on held-out deals before entry selection.
+
+Full audit corrections (#44): the combined preflop tracker now treats a raise
+covering the shorter opponent as terminal, avoiding a false fold observation
+when the opponent calls off. Adapter hand tracking also separates consecutive
+deals with identical hole cards and equal-length history, while repeated
+bookkeeping on the same SDK request remains idempotent. The organiser creates
+a fresh state per turn and records each action before the next turn.

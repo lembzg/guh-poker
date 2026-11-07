@@ -146,6 +146,7 @@ class ArenaAdapter:
         self.response_cls = response_cls
         self.hand_id = -1
         self._last_hole = None
+        self._last_request = None
         self._last_len = 0
         self._last_state: GameState | None = None
         self._last_action: Action | None = None
@@ -185,9 +186,17 @@ class ArenaAdapter:
     # ------------------------------------------------------------- hand tracking
 
     def _track_hand(self, gs) -> None:
+        # A combined terminal preflop decision may call act() then observe()
+        # with the same request. Do not count that bookkeeping as another turn.
+        if gs is self._last_request:
+            return
+        self._last_request = gs
         hole = tuple(gs.hole_cards)
         n = len(gs.action_history)
-        if hole != self._last_hole or n < self._last_len:
+        # The SDK creates a fresh object per turn; within a hand the preceding
+        # action must grow history. Equal length can be a new deal with the
+        # same hole cards, even though no hand ID is exposed by the arena.
+        if hole != self._last_hole or n <= self._last_len:
             self._finish_hand()
             self.hand_id += 1
         self._last_hole, self._last_len = hole, n

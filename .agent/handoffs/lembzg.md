@@ -1,10 +1,10 @@
 # Handoff — lembzg
 
-Updated: 2026-11-07T01:36:52.673629+00:00
-Status: ready
+Updated: 2026-11-07T01:47:52.105571+00:00
+Status: in_progress
 Task: #44 Combine final bot candidate and verify integration (PR #45)
 Branch: lembzg/44-final-combined
-Commit: 4ad3c11 Verify legal-size confidence gates in final combined bot (#44)
+Commit: 36943b2
 
 ## Done
 - Combined #32, #34, #41, #43, #42 and #36 on one branch; PR #45 is the integration candidate against main.
@@ -12,7 +12,8 @@ Commit: 4ad3c11 Verify legal-size confidence gates in final combined bot (#44)
 - Local preflop helpers included; build --strategy combo requires no external preflop checkout. Build and exact verification in docs/ENVIRONMENT.md and docs/integration-change-ledger.md.
 
 ## In progress
-- Integration complete; exact-source package and final-test handoff delivered. No implementation remains.
+- Full audit: fixed covering-raise false folds and repeated-card hand detection; three new regressions. Serial full gate with ARENA_ROOT passes all 286 tests; 8800 arena hands across 11 styles/two seeds fault-free; 60000 evaluator comparisons agree.
+- Refreshing exact corrected package and running clean-snapshot/packed verification. Previous delivered package is superseded once rebuilt.
 
 ## Files touched
 - Integration of preflop helper/table/tools, combined routing, all-in helpers, stack contract, confidence-based postflop/opponent model and requirements/test gate.
@@ -35,6 +36,7 @@ Commit: 4ad3c11 Verify legal-size confidence gates in final combined bot (#44)
 - Shared-contract review remains applicable before any main merge; PR #45 consolidates existing pending changes without merging or closing their PRs.
 
 ## Next steps
-1. Use branch lembzg/44-final-combined / PR #45 as the candidate for the user's final test.
-2. Build with python -m adapters.arena.build --team final-combined --strategy combo; validate/pack in organisers' infrastructure checkout.
-3. Run held-out final comparisons against exact combined payload before selecting/submitting; coordinate review/merge of consolidated PR separately.
+1. Complete clean-snapshot and packed verification, refresh output manifest/report, push audit corrections.
+2. Use branch lembzg/44-final-combined / PR #45 as the candidate for the user's final test.
+3. Build with python -m adapters.arena.build --team final-combined --strategy combo; validate/pack in organisers' infrastructure checkout.
+4. Run held-out final comparisons against exact combined payload before selecting/submitting; coordinate review/merge of consolidated PR separately.

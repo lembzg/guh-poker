@@ -43,8 +43,13 @@ class ComboBot(PokerBot):
             self._post.observe(gs, resp)
         try:
             kind = "raise" if resp.action_type in ("raise", "all_in") else resp.action_type
-            self.model.record_own(kind, resp.action_type == "all_in" or resp.amount == gs.max_raise_to,
-                                  bool(gs.is_preflop))
+            # A covering raise also ends betting if the shorter opponent calls.
+            # The missing next turn cannot distinguish that call from a fold.
+            effective_total = min(stack + bet for stack, bet in zip(gs.stack_sizes, gs.current_bets))
+            terminal_raise = kind == "raise" and (
+                resp.action_type == "all_in"
+                or (resp.amount is not None and resp.amount >= effective_total))
+            self.model.record_own(kind, terminal_raise, bool(gs.is_preflop))
         except Exception as exc:  # bookkeeping must not replace an already tracked action
             print(f"record_own() failed: {exc!r}")
         return resp

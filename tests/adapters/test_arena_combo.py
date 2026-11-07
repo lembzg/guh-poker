@@ -41,7 +41,7 @@ def combo(monkeypatch):
     bot.model = SimpleNamespace(observe=lambda gs: None, record_own=lambda *args: None)
     state = SimpleNamespace(is_preflop=True, call_amount=10, max_raise_to=2000,
                             min_raise_to=40, can_raise=True, can_bet=False,
-                            stack_sizes=(1990, 1980), my_index=0)
+                            stack_sizes=(1990, 1980), current_bets=(10, 20), my_index=0)
     return bot, state, tracked
 
 
@@ -87,3 +87,21 @@ def test_covering_short_opponent_allin_uses_guarded_call_policy(combo):
     response = bot.act(state)
     assert response.amount == 100  # stubbed MainBot path, rather than external preflop's 60
     assert tracked == [response]
+
+
+def test_covering_preflop_raise_does_not_teach_a_false_fold(combo):
+    """A short opponent can call off without giving us another turn."""
+    bot, state, _ = combo
+    model_path = Path(__file__).resolve().parents[2] / 'bots/myteam/opponent.py'
+    model_type = runpy.run_path(str(model_path))['OpponentModel']
+    bot.model = model_type()
+    state.dealer_index = 0
+    state.my_player_id = 'seat0'
+    state.current_bets = (10, 20)
+    state.stack_sizes = (1990, 40)  # opponent has only 60 total
+    state.action_history = []
+    response = bot.act(state)  # stubbed preflop opens to 60
+    assert response.amount == 60
+    bot.model._finish_hand()
+    assert bot.model.c['open_fold'] == 0
+    assert bot.model.c['open_seen'] == 0  # outcome unavailable, not a fold

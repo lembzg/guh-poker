@@ -214,3 +214,24 @@ def test_external_decisions_update_optional_state_observer():
     ad = ArenaAdapter(bot, Resp)
     ad.observe(preflop_button(), SimpleNamespace(action_type='call', amount=None))
     assert len(seen) == 1 and seen[0].opp_starting_stack == 2000
+
+
+def test_distinct_turns_with_identical_cards_and_history_start_new_hands():
+    bot = Recorder([Action('raise', 60), Action('raise', 60)])
+    ad = ArenaAdapter(bot, Resp)
+    # The arena gives one fresh GameState per turn. Consecutive deals can
+    # repeat our hole cards and the initial blinds; history cannot advance
+    # within one hand without recording our preceding action.
+    ad.act(preflop_button())
+    ad.act(preflop_button())
+    assert ad.hand_id == 1
+    assert len(bot.results) == 1
+
+
+def test_observing_same_request_after_act_does_not_finish_hand_twice():
+    bot = Recorder([Action('call')])
+    ad = ArenaAdapter(bot, Resp)
+    gs = preflop_button()
+    ad.act(gs)
+    ad.observe(gs, SimpleNamespace(action_type='call', amount=None))
+    assert ad.hand_id == 0 and not bot.results
