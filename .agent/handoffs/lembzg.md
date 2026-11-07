@@ -4,7 +4,7 @@ Updated: 2026-11-07T01:42:17.235384+00:00
 Status: ready
 Task: #33 Report-only overnight sparring/tuning; DO NOT START until user explicitly asks
 Branch: lembzg/33-overnight-runner
-Commit: this checkpoint — full recheck and complete telemetry guard (#33)
+Commit: 195fd0f Reject incomplete overnight telemetry as winning evidence (#33)
 
 ## Done
 - Full user-requested recheck: reject incomplete internal telemetry as healthy evidence; export censoring/completeness in CSV. Added regression coverage. Official guide unchanged; no live matches started.
