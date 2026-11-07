@@ -14,8 +14,9 @@ sizes by texture. Thresholds are starting points, to be tuned in the harness.
 """
 from __future__ import annotations
 
+import math
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from core.equity import RANKS, Range, equity, top_percent_range
 from core.interface import Action, GameState, OpponentStats
@@ -33,6 +34,28 @@ DRAW_BONUS = 0.03                           # implied odds for a real draw on fl
 STACKOFF_FRAC = 0.5                         # a call this big a share of my stack needs extra equity
 STACKOFF_MARGIN = 0.05
 
+# Research rules (#40, deep-research report): exploit only on confident counts.
+BLUFF_MARGIN = {2: 0.04, 3: 0.06, 4: 0.08}  # required lower-bound fold rate above break-even, by street
+BARREL_MIN_OBS = 15                         # turn/river pure-air barrels need this many same-street samples
+BLUFF_SIZES = (0.33, 0.5, 0.67)             # smallest passing size wins: small bluffs need fewer folds
+Z05, Z10 = 1.645, 1.2816
+
+
+def beta_bounds(hits: float, n: int, prior: float = 5.0) -> tuple[float, float]:
+    """(mean, sd) of Beta(prior + hits, prior + n - hits); normal approximation is fine for a, b >= 5."""
+    a, b = prior + hits, prior + n - hits
+    return a / (a + b), math.sqrt(a * b / ((a + b) ** 2 * (a + b + 1)))
+
+
+def lower_bound(hits: float, n: int, z: float = Z05) -> float:
+    m, sd = beta_bounds(hits, n)
+    return max(0.0, m - z * sd)
+
+
+def upper_bound(hits: float, n: int, z: float = Z05) -> float:
+    m, sd = beta_bounds(hits, n)
+    return min(1.0, m + z * sd)
+
 
 @dataclass(frozen=True)
 class Knobs:
@@ -42,14 +65,28 @@ class Knobs:
     fold_to_bet: float
     fold_to_cbet: float
     aggression: float
+    hf_bettor: bool = False           # bets when checked to with q10 > 0.65 (n >= 15)
+    auto_bettor: bool = False         # q10 > 0.72 (n >= 25): call at raw pot odds
+    counts: dict | None = field(default=None, compare=False)
 
 
-def knobs(opp: OpponentStats | None) -> Knobs:
+def knobs(opp: OpponentStats | None, counts: dict | None = None) -> Knobs:
+    """Opponent profile. With raw counts (OpponentModel.counts()) the labels are confidence-gated
+    (research rules, #40); without them, the smoothed stats with prior defaults are used."""
     def g(name):
         v = getattr(opp, name, None) if opp is not None else None
         return DEFAULTS[name] if v is None else v
 
     fb, fcb, af, wtsd = g("fold_to_bet"), g("fold_to_cbet"), g("aggression"), g("wtsd")
+    if counts:
+        f, n = counts.get("fold_to_bet", (0, 0))
+        b, nc = counts.get("bet_when_checked_to", (0, 0))
+        station = n >= 10 and upper_bound(f, n) < 0.30
+        folder = n >= 10 and lower_bound(f, n) > 0.50
+        hf = nc >= 15 and lower_bound(b, nc, Z10) > 0.65
+        auto = nc >= 25 and lower_bound(b, nc, Z10) > 0.72
+        return Knobs(station=station, folder=folder, maniac=af > 2.5 or auto, fold_to_bet=fb, fold_to_cbet=fcb,
+                     aggression=af, hf_bettor=hf or auto, auto_bettor=auto, counts=counts)
     return Knobs(
         station=fb < 0.30 or wtsd > 0.55,
         folder=fb > 0.55,
@@ -125,25 +162,23 @@ def _bet(state: GameState, frac: float) -> Action:
 
 
 def _value_size(eq: float, wet: bool, k: Knobs, spr: float) -> float:
-    base = 0.70 if wet else 0.45
-    if eq >= 0.85:
-        base += 0.25
-    elif eq >= 0.72:
-        base += 0.10
-    if k.station:
-        base += 0.25
+    """Research sizing (#40): thin / clear / strong value. Stations: never overbet. Folders: small."""
     if spr <= 1.5 and eq >= 0.70:
-        base = 10.0                           # shallow: get it all in
-    return base
+        return 10.0                           # shallow: get it all in
+    if k.station:
+        return 0.33 if eq < 0.70 else 0.60 if eq < 0.82 else 0.85
+    if k.folder:
+        return 0.30 if eq < 0.70 else 0.50 if eq < 0.85 else 0.67
+    return 0.33 if eq < 0.70 else 0.67 if eq < 0.82 else 1.0
 
 
 # ------------------------------------------------------------------ main entry
 
 def postflop_action(state: GameState, opp: OpponentStats | None, opp_range: Range | None,
-                    time_budget_ms: float = DEFAULT_BUDGET_MS) -> Action:
+                    time_budget_ms: float = DEFAULT_BUDGET_MS, opp_counts: dict | None = None) -> Action:
     lg = state.legal
     street = state.street if state.street in (2, 3, 4) else 2
-    k = knobs(opp)
+    k = knobs(opp, opp_counts)
     rng_mix = random.Random(f"{state.hand_id}:{street}:{len(state.history)}:{state.hole_cards}")
 
     if opp_range is None:
@@ -181,6 +216,10 @@ def _facing_bet(state, eq, k, street, spr, wet, draw, rng_mix) -> Action:
     my_behind = state.starting_stack - state.my_committed
     if call >= STACKOFF_FRAC * my_behind and eq < 0.80:
         need += STACKOFF_MARGIN               # v0's stack-off guard, softened
+    if k.auto_bettor:
+        need = min(need, pot_odds)            # research: call auto-bettors at raw pot odds
+    elif k.hf_bettor:
+        need = min(need, pot_odds + 0.02)
 
     raise_eq = RAISE_EQ - (0.05 if k.station else 0.0)
     if eq >= raise_eq and lg.min_raise_to is not None:
@@ -205,27 +244,32 @@ def _checked_to(state, eq, k, street, spr, wet, draw, rng_mix) -> Action:
 
     if eq >= value_eq:
         # Trap a maniac: check strong (not nutted) hands out of position and let them bet.
-        if k.maniac and oop and street < 4 and eq < 0.92 and rng_mix.random() < 0.7:
+        if (k.maniac or k.hf_bettor) and oop and street < 4 and eq < 0.92 and rng_mix.random() < 0.7:
             return Action("check")
         return _bet(state, _value_size(eq, wet, k, spr))
 
-    # Bluff / semi-bluff only when it beats checking in expected value.
-    i_raised_pre = any(a.actor == "me" and a.kind == "raise" for a in state.history if a.street == 1)
-    cbet_spot = street == 2 and i_raised_pre and not any(a.street == 2 and a.kind == "raise"
-                                                         for a in state.history)
-    fold_p = k.fold_to_cbet if cbet_spot else k.fold_to_bet
-    if k.maniac:
-        fold_p *= 0.7                         # they raise instead of folding
+    # Bluffs: only when even a cautious (5th-percentile) estimate of their fold rate beats break-even
+    # (research rule, #40). Pure air uses B/(P+B); draws use the equity-adjusted break-even.
+    counts = k.counts or {}
+    f_hits, f_n = counts.get("fold_to_bet", (0, 0))
+    barrel = street > 2 and any(a.actor == "me" and a.kind == "raise" and a.street == street - 1
+                                for a in state.history)
+    if barrel:
+        sf, sn = counts.get("fold_to_bet_by_street", {}).get(street, (0, 0))
+        if sn >= BARREL_MIN_OBS:
+            f_hits, f_n = sf, sn
+        elif not draw:
+            return Action("check")            # no same-street evidence: only barrel strong draws
+    fold_lb = lower_bound(f_hits, f_n)
     pot = state.my_committed + state.opp_committed
-    ev_check = eq * pot
-    best, best_ev = None, ev_check
-    for frac in (0.33, 0.5, 0.75):
+    eq_called = eq * 0.85                     # they continue with their better hands
+    for frac in BLUFF_SIZES:
         b = frac * pot
-        f = min(0.95, fold_p * (0.85 + 0.3 * frac))   # bigger bets fold out a little more
-        eq_called = eq * 0.85                 # they call with their better hands
-        ev = f * pot + (1 - f) * (eq_called * (pot + 2 * b) - b)
-        if ev > best_ev * 1.05 + 0.01 * pot:
-            best, best_ev = frac, ev
-    if best is not None and (eq >= 0.2 or draw or k.folder or street == 4):
-        return _bet(state, best)
+        if draw:
+            denom = pot + b - eq_called * (pot + 2 * b)
+            breakeven = max(0.0, (b - eq_called * (pot + 2 * b)) / denom) if denom > 0 else 0.0
+        else:
+            breakeven = b / (pot + b)
+        if fold_lb > breakeven + BLUFF_MARGIN[street]:
+            return _bet(state, frac)
     return Action("check")
