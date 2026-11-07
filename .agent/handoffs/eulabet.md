@@ -2,34 +2,32 @@
 
 <!-- Only you edit your file. Overwrite (don't append) at each checkpoint. Format: .agent/RECOVERY.md -->
 
-Updated: 2026-11-06T23:57:22+00:00
-Status: in-review
-Task: #26 EV engine follow-up (PR pending); #19 opponent model awaiting lembzg approval
-Branch: eulabet/26-ev-check
-Commit: 48bab66
+Updated: 2026-11-07T00:10:37+00:00
+Status: in-progress
+Task: #8 Arena adapter + pack (#19 awaiting lembzg approval)
+Branch: eulabet/8-arena-adapter
+Commit: none
 
 ## Done
-- Merged: #10 equity (#15), #6 harness (#18), #22 gauntlet (#23), #24 EV engine (#25), #12 postflop (#20), #5 MainBot (#21). Milestone "MainBot plays legal hands" ✅.
-- #26: ev.py OOP check model (opp bets after our check; best of fold/call/check-raise) + draw-aware opp strength (equity vs random). 14 EV tests.
+- Merged: #15 equity, #18 harness, #23 gauntlet, #25/#28 EV engine (tool), #20 postflop, #21 MainBot, #30 pure-Python runtime.
+- Rules + environment recorded in docs/PRODUCT.md, docs/ENVIRONMENT.md (organisers' site + repo Manchester-AI-Society/poker_bot_infrastructure).
 
 ## In progress
-- PR #19 (#13 opponent model): rebased, CI green, needs lembzg contract approval. Pinged with status (also: clamp float raise_to, v0 test needs eval7).
-- #26 PR: tool only, not wired. A/B (EV as whole postflop policy vs current, 4k dup seed 51): hackathon 119±90 vs 210±84; equity_bot 86±74 vs 159±55. Current postflop stays.
+- #8: adapters/arena (their PokerBot/GameState ↔ our contract), build folder + arena pack/validate locally.
 
 ## Files touched
-- bots/main/ev.py, tests/bots/main/test_ev.py
+- adapters/arena/, tests/adapters/
 
 ## Tests
-- main: 138 pass + 1 fail (tests/bots/v0 raise test needs eval7, not installed; Python 3.14 can't build it).
+- main suite green except tests/bots/v0 eval7 test (eval7 not installable).
 
 ## Bugs / blockers
-- eval7 can't build on local Python 3.14 → v0 can't be measured here.
-- User: friend is improving v0 / preflop (improvements.md) → stay off bots/v0 and #11.
-- Tournament: 3 min per decision (unverified details) — docs/PRODUCT.md.
+- Deadline 18:00 event day. Team name for arena pack still unknown (ask human).
+- v0 needs eval7 → unusable in sandbox (told lembzg on #27/#8).
 
 ## Decisions & dependencies
-- EV engine as full policy loses to postflop.py heuristics vs betting bots; wins big vs always_call. Use selectively later (sizing / vs stations) with harness A/B.
+- Organisers' infra cloned at scratchpad/infra (8b89346). Their history: post_small_blind/post_big_blind, call amount = chips added, bet/raise_to amount = street total, player ids seatN.
 
 ## Next steps
-1. Merge #26 PR after CI. Merge #19 once approved; then gauntlet main (python -m harness.gauntlet --a main) and record in docs/PRODUCT.md Results.
-2. Options: selective EV use in postflop.py (vs stations, confident stats); harness clock/timeouts simulation.
+1. Finish adapter + tests; build bot folder; run arena validate/match/pack with Python 3.14 venv.
+2. Ask human for team name; produce .pkl.
