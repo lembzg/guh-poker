@@ -15,9 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-import numpy as np
-
-from core.equity import _CARD_TO_IDX, _IDX_TO_CARD, _hand_class, _preflop_ranking, _rank_matrix, Range, rank7
+from core.equity import _CARD_TO_IDX, _IDX_TO_CARD, _hand_class, _preflop_ranking, _rank_ints, Range, rank7
 from core.interface import GameState, HandResult, OpponentStats
 
 # Priors: what we assume before we've seen enough. Heads-up values, not v0's 6-max ones.
@@ -30,25 +28,31 @@ MIN_SAMPLES = 12      # opportunities before a stat stops being None (v0: _MIN_O
 BIG_BET_FRAC = 0.66   # a postflop bet/raise at least this share of the pot counts as "big"
 BLUFF_MIN_SAMPLES = 3
 
-_ALL_COMBOS = np.array([(a, b) for a in range(52) for b in range(a)], dtype=np.int64)  # (1326, 2)
+_ALL_COMBOS = [(a, b) for a in range(52) for b in range(a)]   # 1326 combos, higher card index first
 MAX_AGGRESSION = 10.0  # reported when they bet/raise but never call
 
 
 def _build_preflop_index():
     order = {c: i for i, c in enumerate(_preflop_ranking())}
-    cls_of = np.array([order[_hand_class(int(a), int(b))] for a, b in _ALL_COMBOS], dtype=np.int64)
-    size = np.bincount(cls_of, minlength=len(order)).astype(np.float64)
-    return cls_of, size, np.cumsum(size) - size
+    cls_of = [order[_hand_class(a, b)] for a, b in _ALL_COMBOS]
+    size = [0.0] * len(order)
+    for c in cls_of:
+        size[c] += 1
+    cum_before, acc = [], 0.0
+    for n in size:
+        cum_before.append(acc)
+        acc += n
+    return cls_of, size, cum_before
 
 
 _CLASS_OF, _CLASS_SIZE, _CLASS_CUM_BEFORE = _build_preflop_index()
 
 
-def _top_weights(pct: float) -> np.ndarray:
-    """Weight of each of the 1326 combos in core.equity.top_percent_range(pct), vectorised."""
+def _top_weights(pct: float) -> list[float]:
+    """Weight of each of the 1326 combos in core.equity.top_percent_range(pct) (pure Python)."""
     target = min(max(pct, 0.0), 1.0) * 1326
-    w_class = np.clip((target - _CLASS_CUM_BEFORE) / _CLASS_SIZE, 0.0, 1.0)
-    return w_class[_CLASS_OF]
+    w_class = [min(1.0, max(0.0, (target - cb) / n)) for cb, n in zip(_CLASS_CUM_BEFORE, _CLASS_SIZE)]
+    return [w_class[c] for c in _CLASS_OF]
 
 
 @dataclass
@@ -239,64 +243,66 @@ class OpponentModel:
             return PRIOR[name] if v is None else v
 
         dead = {_CARD_TO_IDX[c] for c in tuple(state.hole_cards) + tuple(state.board)}
-        live = ~np.isin(_ALL_COMBOS, list(dead)).any(axis=1)
-        combos = _ALL_COMBOS[live]
+        live = [i for i, (a, b) in enumerate(_ALL_COMBOS) if a not in dead and b not in dead]
+        combos = [_ALL_COMBOS[i] for i in live]
         weights = self._preflop_weights(live, [a for a in acts if a.street == 1 and a.actor == "opp"], get)
 
         for street, n_board in ((2, 3), (3, 4), (4, 5)):
             street_opp = [a for a in acts if a.street == street and a.actor == "opp"]
             if not street_opp or len(state.board) < n_board:
                 continue
-            board = np.array([_CARD_TO_IDX[c] for c in state.board[:n_board]], dtype=np.int64)
-            vals = _rank_matrix(np.concatenate([combos, np.broadcast_to(board, (len(combos), n_board))], axis=1))
+            board = [_CARD_TO_IDX[c] for c in state.board[:n_board]]
+            vals = [_rank_ints([a, b] + board) for a, b in combos]
             for a in street_opp:
                 pct = _strength_percentile(vals, weights)
-                weights = weights * _postflop_multiplier(a, pct, get, self.bluff_rate())
+                weights = [w * m for w, m in zip(weights, _postflop_multiplier(a, pct, get, self.bluff_rate()))]
 
-        keep = weights > 1e-9
-        if not keep.any():
-            return None
-        return {(_IDX_TO_CARD[a], _IDX_TO_CARD[b]): float(w) for (a, b), w in zip(combos[keep], weights[keep])}
+        out = {(_IDX_TO_CARD[a], _IDX_TO_CARD[b]): w for (a, b), w in zip(combos, weights) if w > 1e-9}
+        return out or None
 
-    def _preflop_weights(self, live: np.ndarray, opp_pre: list[_Act], get) -> np.ndarray:
-        def top(pct: float) -> np.ndarray:
-            return _top_weights(pct)[live]
+    def _preflop_weights(self, live: list[int], opp_pre: list[_Act], get) -> list[float]:
+        def top(pct: float) -> list[float]:
+            tw = _top_weights(pct)
+            return [tw[i] for i in live]
 
         raises = [a for a in opp_pre if a.kind == "raise"]
         if raises:
             pct = get("pfr") if raises[0].raises_before == 0 else get("three_bet")
             pct *= 0.4 ** (len(raises) - 1)          # each further re-raise: much tighter
-            return np.maximum(top(max(pct, 0.025)), 0.0)
+            return top(max(pct, 0.025))
         # Only calls / checks: they'd have raised their best hands most of the time.
         faced_raise = any(a.facing and a.raises_before >= 1 for a in opp_pre)
         would_raise = top(get("three_bet") if faced_raise else get("pfr"))
         called = any(a.kind == "call" for a in opp_pre)
-        base = top(get("vpip")) if called and faced_raise else np.ones(int(live.sum()))
-        return base * (1.0 - 0.65 * would_raise)
+        base = top(get("vpip")) if called and faced_raise else [1.0] * len(live)
+        return [b * (1.0 - 0.65 * r) for b, r in zip(base, would_raise)]
 
 
-def _strength_percentile(vals: np.ndarray, weights: np.ndarray) -> np.ndarray:
-    """Weighted percentile (0 = weakest, 1 = strongest) of each combo's hand strength within the range."""
-    order = np.argsort(vals, kind="stable")
-    w = weights[order]
-    total = w.sum()
+def _strength_percentile(vals: list[int], weights: list[float]) -> list[float]:
+    """Weighted percentile (0 = weakest, 1 = strongest) of each combo's hand strength within the range;
+    equal strengths share their group's midpoint."""
+    n = len(vals)
+    total = sum(weights)
+    out = [0.0] * n
     if total <= 0:
-        return np.zeros(len(vals))
-    cum = np.cumsum(w) - w / 2
-    sorted_vals = vals[order]
-    # equal strengths share a percentile
-    _, first = np.unique(sorted_vals, return_index=True)
-    group = np.searchsorted(sorted_vals[first], sorted_vals)
-    group_mid = np.zeros(len(first))
-    np.add.at(group_mid, group, cum)
-    counts = np.bincount(group)
-    pct_sorted = (group_mid / counts)[group] / total
-    out = np.empty(len(vals))
-    out[order] = pct_sorted
+        return out
+    order = sorted(range(n), key=vals.__getitem__)
+    cum, i = 0.0, 0
+    while i < n:
+        j, gw = i, 0.0
+        v = vals[order[i]]
+        while j < n and vals[order[j]] == v:
+            gw += weights[order[j]]
+            j += 1
+        mid = (cum + gw / 2) / total
+        for k in range(i, j):
+            out[order[k]] = mid
+        cum += gw
+        i = j
     return out
 
 
-def _postflop_multiplier(a: _Act, pct: np.ndarray, get, bluff_rate: float | None) -> np.ndarray:
+def _postflop_multiplier(a: _Act, pct: list[float], get, bluff_rate: float | None) -> list[float]:
     if a.kind == "raise":
         frac = a.bet_frac or 0.5
         keep = 0.5 if frac <= 0.5 else 0.4 if frac <= 1.0 else 0.3
@@ -306,14 +312,14 @@ def _postflop_multiplier(a: _Act, pct: np.ndarray, get, bluff_rate: float | None
             b = bluff_rate
         else:
             b = min(0.6, max(0.05, 0.15 + 0.08 * (get("aggression") - 1.0)))
-        w = b * keep / ((1 - b) * (1 - keep))            # weight on the weak part so bluffs make up b
-        return np.where(pct >= 1 - keep, 1.0, min(1.0, max(0.02, w)))
+        w = min(1.0, max(0.02, b * keep / ((1 - b) * (1 - keep))))   # so bluffs make up b of their bets
+        return [1.0 if p >= 1 - keep else w for p in pct]
     if a.kind == "call" and a.facing:
         mult = min(1.0, max(0.1, 1.0 - 1.5 * get("fold_to_bet")))
-        return np.where(pct < 0.35, mult, 1.0)
+        return [mult if p < 0.35 else 1.0 for p in pct]
     if a.kind == "check" and not a.facing:
-        return np.where(pct >= 0.85, 0.6, 1.0)          # they'd usually bet their best hands
-    return np.ones(len(pct))
+        return [0.6 if p >= 0.85 else 1.0 for p in pct]   # they'd usually bet their best hands
+    return [1.0] * len(pct)
 
 
 def classify(stats: OpponentStats) -> str:
