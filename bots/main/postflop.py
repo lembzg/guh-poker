@@ -40,7 +40,10 @@ BLUFF_MARGIN = {2: 0.04, 3: 0.06, 4: 0.08}  # required lower-bound fold rate abo
 BARREL_MIN_OBS = 15                         # turn/river pure-air barrels need this many same-street samples
 BLUFF_SIZES = (0.33, 0.5, 0.67)             # smallest passing size wins: small bluffs need fewer folds
 Z05, Z10 = 1.645, 1.2816
-MDF_SHARE = 0.90                            # defend at least this share of MDF vs confident frequent bettors (#50)
+# MDF floor vs confident frequent bettors (#50). OFF by default: two organisers'-engine A/Bs (seeds 21, 22,
+# 2000-3000 hands per opponent) showed no consistent gain (random: +2.2 then -1.2 bb/hand). Kept as a dial for
+# tuning (#46); 0.9 = defend at least 90% of MDF.
+MDF_SHARE = 0.0
 
 
 def made_hand_percentile(hole: tuple[str, str], board: tuple[str, ...]) -> float:
@@ -254,7 +257,7 @@ def _facing_bet(state, eq, k, street, spr, wet, draw, rng_mix) -> Action:
         return _bet(state, 0.75)
     if eq >= need:
         return Action("call")
-    if k.hf_bettor:
+    if k.hf_bettor and MDF_SHARE > 0:
         # MDF floor (#50): against a confident frequent bettor, don't fold so much that their bluffs
         # auto-profit. Defend if our made hand is in the top MDF_SHARE * MDF of holdings on this board.
         pot_before = max(1, pot - call)
